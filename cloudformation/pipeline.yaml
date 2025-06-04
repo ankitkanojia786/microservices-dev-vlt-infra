@@ -92,30 +92,37 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonS3FullAccess
         - arn:aws:iam::aws:policy/AmazonVPCFullAccess
         - arn:aws:iam::aws:policy/IAMFullAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
       Policies:
-        - PolicyName: ECSAccess
+        - PolicyName: ComprehensiveAccess
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action:
                   - 'ecs:*'
-                Resource: '*'
-        - PolicyName: ECRAccess
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
                   - 'ecr:*'
-                Resource: '*'
-        - PolicyName: APIGatewayAccess
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
                   - 'apigateway:*'
+                  - 'logs:*'
+                  - 'cloudwatch:*'
+                  - 'ssm:*'
+                  - 'kms:*'
+                  - 'elasticloadbalancing:*'
+                  - 'route53:*'
+                  - 'acm:*'
+                  - 'cloudfront:*'
+                  - 'lambda:*'
+                  - 'events:*'
+                  - 'sns:*'
+                  - 'sqs:*'
+                  - 'dynamodb:*'
+                  - 'secretsmanager:*'
+                  - 'codebuild:*'
+                  - 'codepipeline:*'
+                  - 'codestar-connections:*'
+                  - 'codecommit:*'
+                  - 'codedeploy:*'
+                  - 'states:*'
                 Resource: '*'
       Tags:
         - Key: ohi:project
