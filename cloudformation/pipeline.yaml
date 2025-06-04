@@ -1,0 +1,239 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for Terraform Infrastructure Pipeline'
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: vlt-subscription
+    Description: Project name used for resource naming
+  
+  Environment:
+    Type: String
+    Default: usdev-usw2
+    AllowedValues:
+      - usdev-usw2
+      - usqa-usw2
+      - usstg-usw2
+      - usprod-usw2
+      - usbeta-usw2
+    Description: Environment name
+  
+  TerraformRepositoryName:
+    Type: String
+    Default: subscription-microservices-testing
+    Description: GitHub repository name for Terraform code
+  
+  TerraformRepositoryOwner:
+    Type: String
+    Default: ankitkanojia786
+    Description: GitHub repository owner for Terraform code
+  
+  TerraformBranchName:
+    Type: String
+    Default: main
+    Description: Branch name for Terraform code
+
+Resources:
+  # S3 bucket for Terraform artifacts
+  TerraformArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Environment}-vlt-tf-subscription-microservices-artifacts'
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: ohi:project
+          Value: vlt
+        - Key: ohi:application
+          Value: vlt-subscription
+        - Key: ohi:module
+          Value: vlt-subscription-be
+        - Key: ohi:environment
+          Value: !Ref Environment
+
+  # IAM role for CodePipeline
+  CodePipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Environment}-vlt-tf-subscription-microservices-pipeline-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
+      Tags:
+        - Key: ohi:project
+          Value: vlt
+        - Key: ohi:application
+          Value: vlt-subscription
+        - Key: ohi:module
+          Value: vlt-subscription-be
+        - Key: ohi:environment
+          Value: !Ref Environment
+
+  # IAM role for CodeBuild
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Environment}-vlt-tf-subscription-microservices-build-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AmazonECR-FullAccess
+        - arn:aws:iam::aws:policy/AmazonECS-FullAccess
+        - arn:aws:iam::aws:policy/AmazonVPCFullAccess
+        - arn:aws:iam::aws:policy/IAMFullAccess
+        - arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
+      Tags:
+        - Key: ohi:project
+          Value: vlt
+        - Key: ohi:application
+          Value: vlt-subscription
+        - Key: ohi:module
+          Value: vlt-subscription-be
+        - Key: ohi:environment
+          Value: !Ref Environment
+
+  # CodeBuild project for Terraform
+  TerraformCodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub '${Environment}-vlt-tf-subscription-microservices-build'
+      Description: 'CodeBuild project for Terraform infrastructure'
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:3.0
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: TF_IN_AUTOMATION
+            Value: 'true'
+          - Name: ENVIRONMENT
+            Value: !Ref Environment
+          - Name: TERRAFORM_ROLE_ARN
+            Value: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${Environment}-vlt-tf-subscription-microservices-terraform-role'
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: subscription-microservices-testing/buildspec-terraform.yml
+      Tags:
+        - Key: ohi:project
+          Value: vlt
+        - Key: ohi:application
+          Value: vlt-subscription
+        - Key: ohi:module
+          Value: vlt-subscription-be
+        - Key: ohi:environment
+          Value: !Ref Environment
+
+  # GitHub connection for CodeStar
+  GitHubConnection:
+    Type: AWS::CodeStarConnections::Connection
+    Properties:
+      ConnectionName: !Sub '${Environment}-vlt-tf-subscription-microservices-github-connection'
+      ProviderType: GitHub
+      Tags:
+        - Key: ohi:project
+          Value: vlt
+        - Key: ohi:application
+          Value: vlt-subscription
+        - Key: ohi:module
+          Value: vlt-subscription-be
+        - Key: ohi:environment
+          Value: !Ref Environment
+
+  # CodePipeline for Terraform
+  TerraformPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: !Sub '${Environment}-vlt-tf-subscription-microservices-infra-pipeline'
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref TerraformArtifactBucket
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeStarSourceConnection
+                Version: '1'
+              Configuration:
+                ConnectionArn: !Ref GitHubConnection
+                FullRepositoryId: !Sub '${TerraformRepositoryOwner}/${TerraformRepositoryName}'
+                BranchName: !Ref TerraformBranchName
+              OutputArtifacts:
+                - Name: SourceCode
+        - Name: Plan
+          Actions:
+            - Name: TerraformPlan
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref TerraformCodeBuildProject
+                EnvironmentVariables: !Sub '[{"name":"TF_COMMAND","value":"plan","type":"PLAINTEXT"}]'
+              InputArtifacts:
+                - Name: SourceCode
+              OutputArtifacts:
+                - Name: TerraformPlan
+        - Name: Approve
+          Actions:
+            - Name: Approval
+              ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: '1'
+        - Name: Apply
+          Actions:
+            - Name: TerraformApply
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref TerraformCodeBuildProject
+                EnvironmentVariables: !Sub '[{"name":"TF_COMMAND","value":"apply","type":"PLAINTEXT"}]'
+              InputArtifacts:
+                - Name: SourceCode
+      Tags:
+        - Key: ohi:project
+          Value: vlt
+        - Key: ohi:application
+          Value: vlt-subscription
+        - Key: ohi:module
+          Value: vlt-subscription-be
+        - Key: ohi:environment
+          Value: !Ref Environment
+
+Outputs:
+  TerraformPipelineName:
+    Description: Name of the Terraform pipeline
+    Value: !Ref TerraformPipeline
+  
+  TerraformArtifactBucketName:
+    Description: Name of the S3 bucket for Terraform artifacts
+    Value: !Ref TerraformArtifactBucket
+  
+  GitHubConnectionArn:
+    Description: ARN of the GitHub connection
+    Value: !Ref GitHubConnection

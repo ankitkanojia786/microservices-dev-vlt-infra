@@ -1,0 +1,244 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for Application Deployment Pipeline'
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: vlt-subscription
+    Description: Project name used for resource naming
+  
+  Environment:
+    Type: String
+    Default: usdev-usw2
+    AllowedValues:
+      - usdev-usw2
+      - usqa-usw2
+      - usstg-usw2
+      - usprod-usw2
+      - usbeta-usw2
+    Description: Environment name
+  
+  AppRepositoryName:
+    Type: String
+    Default: subscription-microservices-app
+    Description: GitHub repository name for application code
+  
+  AppRepositoryOwner:
+    Type: String
+    Default: ankitkanojia786
+    Description: GitHub repository owner for application code
+  
+  AppBranchName:
+    Type: String
+    Default: main
+    Description: Branch name for application code
+  
+  EcrRepositoryName:
+    Type: String
+    Description: Name of the ECR repository
+  
+  EcsClusterName:
+    Type: String
+    Description: Name of the ECS cluster
+  
+  EcsServiceName:
+    Type: String
+    Description: Name of the ECS service
+  
+  TaskDefinitionName:
+    Type: String
+    Description: Name of the ECS task definition
+
+Resources:
+  # S3 bucket for pipeline artifacts
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Environment}-${ProjectName}-app-artifacts'
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: ohi:project
+          Value: vlt
+        - Key: ohi:application
+          Value: vlt-subscription
+        - Key: ohi:module
+          Value: vlt-subscription-be
+        - Key: ohi:environment
+          Value: !Ref Environment
+
+  # IAM role for CodePipeline
+  CodePipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Environment}-${ProjectName}-app-pipeline-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
+        - arn:aws:iam::aws:policy/AmazonECR-FullAccess
+        - arn:aws:iam::aws:policy/AmazonECS-FullAccess
+      Tags:
+        - Key: ohi:project
+          Value: vlt
+        - Key: ohi:application
+          Value: vlt-subscription
+        - Key: ohi:module
+          Value: vlt-subscription-be
+        - Key: ohi:environment
+          Value: !Ref Environment
+
+  # IAM role for CodeBuild
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Environment}-${ProjectName}-app-build-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AmazonECR-FullAccess
+        - arn:aws:iam::aws:policy/AmazonECS-FullAccess
+      Tags:
+        - Key: ohi:project
+          Value: vlt
+        - Key: ohi:application
+          Value: vlt-subscription
+        - Key: ohi:module
+          Value: vlt-subscription-be
+        - Key: ohi:environment
+          Value: !Ref Environment
+
+  # GitHub connection for CodeStar
+  GitHubConnection:
+    Type: AWS::CodeStarConnections::Connection
+    Properties:
+      ConnectionName: !Sub '${Environment}-${ProjectName}-app-github-connection'
+      ProviderType: GitHub
+      Tags:
+        - Key: ohi:project
+          Value: vlt
+        - Key: ohi:application
+          Value: vlt-subscription
+        - Key: ohi:module
+          Value: vlt-subscription-be
+        - Key: ohi:environment
+          Value: !Ref Environment
+
+  # CodeBuild project for building Docker image
+  AppBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub '${Environment}-${ProjectName}-app-build'
+      Description: 'CodeBuild project for building Docker image'
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:3.0
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: REPOSITORY_URI
+            Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepositoryName}'
+          - Name: TASK_DEFINITION_NAME
+            Value: !Ref TaskDefinitionName
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: buildspec/app-buildspec.yml
+      Tags:
+        - Key: ohi:project
+          Value: vlt
+        - Key: ohi:application
+          Value: vlt-subscription
+        - Key: ohi:module
+          Value: vlt-subscription-be
+        - Key: ohi:environment
+          Value: !Ref Environment
+
+  # CodePipeline for application deployment
+  AppPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: !Sub '${Environment}-${ProjectName}-app-pipeline'
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactBucket
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeStarSourceConnection
+                Version: '1'
+              Configuration:
+                ConnectionArn: !Ref GitHubConnection
+                FullRepositoryId: !Sub '${AppRepositoryOwner}/${AppRepositoryName}'
+                BranchName: !Ref AppBranchName
+              OutputArtifacts:
+                - Name: SourceCode
+        - Name: Build
+          Actions:
+            - Name: BuildAndPush
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref AppBuildProject
+              InputArtifacts:
+                - Name: SourceCode
+              OutputArtifacts:
+                - Name: BuildOutput
+        - Name: Deploy
+          Actions:
+            - Name: DeployToECS
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: ECS
+                Version: '1'
+              Configuration:
+                ClusterName: !Ref EcsClusterName
+                ServiceName: !Ref EcsServiceName
+                FileName: imageDefinition.json
+              InputArtifacts:
+                - Name: BuildOutput
+      Tags:
+        - Key: ohi:project
+          Value: vlt
+        - Key: ohi:application
+          Value: vlt-subscription
+        - Key: ohi:module
+          Value: vlt-subscription-be
+        - Key: ohi:environment
+          Value: !Ref Environment
+
+Outputs:
+  AppPipelineName:
+    Description: Name of the application pipeline
+    Value: !Ref AppPipeline
+  
+  ArtifactBucketName:
+    Description: Name of the S3 bucket for application artifacts
+    Value: !Ref ArtifactBucket
+  
+  GitHubConnectionArn:
+    Description: ARN of the GitHub connection
+    Value: !Ref GitHubConnection
