@@ -90,10 +90,8 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonS3FullAccess
-        - arn:aws:iam::aws:policy/AmazonECR-FullAccess
         - arn:aws:iam::aws:policy/AmazonVPCFullAccess
         - arn:aws:iam::aws:policy/IAMFullAccess
-        - arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
       Policies:
         - PolicyName: ECSAccess
           PolicyDocument:
@@ -102,6 +100,22 @@ Resources:
               - Effect: Allow
                 Action:
                   - 'ecs:*'
+                Resource: '*'
+        - PolicyName: ECRAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ecr:*'
+                Resource: '*'
+        - PolicyName: APIGatewayAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'apigateway:*'
                 Resource: '*'
       Tags:
         - Key: ohi:project
