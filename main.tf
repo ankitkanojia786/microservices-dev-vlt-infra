@@ -57,8 +57,8 @@ module "compute" {
 
 # ECR module: ECR repositories
 module "ecr" {
-  source      = "./modules/ecr"
-  environment = var.environment
+  source           = "./modules/ecr"
+  environment      = var.environment
 }
 
 # ECS Service module: Task definition and ECS service
