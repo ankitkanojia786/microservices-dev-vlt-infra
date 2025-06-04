@@ -157,7 +157,7 @@ Resources:
             Value: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${Environment}-vlt-tf-subscription-microservices-terraform-role'
       Source:
         Type: CODEPIPELINE
-        BuildSpec: subscription-microservices-testing/buildspec-terraform.yml
+        BuildSpec: buildspec-terraform.yml
       Tags:
         - Key: ohi:project
           Value: vlt
