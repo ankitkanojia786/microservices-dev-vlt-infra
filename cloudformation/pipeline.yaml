@@ -123,6 +123,7 @@ Resources:
                   - 'codecommit:*'
                   - 'codedeploy:*'
                   - 'states:*'
+                  - 'ec2:*'
                 Resource: '*'
       Tags:
         - Key: ohi:project
