@@ -23,7 +23,7 @@ output "alb_dns_name" {
 }
 
 output "ecr_repo_url" {
-  value       = module.ecr.ecr_repo_uris["microservice"]
+  value       = module.ecr.ecr_repo_url
   description = "URL of the ECR repository"
 }
 
