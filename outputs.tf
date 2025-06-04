@@ -56,7 +56,7 @@ output "terraform_artifact_bucket" {
 # ---------------------
 
 output "ecr_repository_name" {
-  value       = "microservice"
+  value       = "${var.environment}-vlt-subscription-ecr"
   description = "Name of the ECR repository for the application pipeline"
 }
 
