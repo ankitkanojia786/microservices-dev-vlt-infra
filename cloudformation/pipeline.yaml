@@ -143,7 +143,7 @@ Resources:
   GitHubConnection:
     Type: AWS::CodeStarConnections::Connection
     Properties:
-      ConnectionName: !Sub '${Environment}-vlt-tf-subscription-microservices-github-connection'
+      ConnectionName: !Sub '${Environment}-vlt-github-conn'
       ProviderType: GitHub
       Tags:
         - Key: ohi:project
