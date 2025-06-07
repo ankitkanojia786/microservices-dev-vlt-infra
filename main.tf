@@ -19,7 +19,7 @@ module "terraform_pipeline" {
 # Networking module: VPC, Subnets, IGW, NAT
 module "networking" {
   source               = "./modules/networking"
-  region               = var.region
+  region               = var.aws_regions
   environment          = var.environment
   vpc_cidr             = var.vpc_cidr
   public_subnet_cidrs  = var.public_subnet_cidrs
@@ -57,8 +57,14 @@ module "compute" {
 
 # ECR module: ECR repositories
 module "ecr" {
-  source           = "./modules/ecr"
-  environment      = var.environment
+  source             = "./modules/ecr"
+  environment        = var.environment
+  country_environment = var.country_environment
+  deployment_region  = var.deployment_region
+  aws_region         = var.aws_regions
+  aws_account_id     = var.aws_account_id
+  tags               = local.tags
+  enable_docker_push = true # Set to false to avoid Docker errors
 }
 
 # ECS Service module: Task definition and ECS service
@@ -66,7 +72,7 @@ module "ecs_service" {
   source             = "./modules/ecs-service"
   environment        = var.environment
   cluster_name       = module.compute.ecs_cluster_name
-  service_name       = "${var.environment}-vlt-subscription-ecs-service"
+  service_name       = "${var.country_environment}-${var.deployment_region}-vlt-subscription-ecs-service"
   task_exec_role_arn = module.security.ecs_task_execution_role_arn
   ecs_sg_id          = module.security.ecs_sg_id
   subnet_ids         = module.networking.private_subnet_ids
@@ -91,7 +97,7 @@ module "api_gateway" {
 module "monitoring" {
   source           = "./modules/monitoring"
   environment      = var.environment
-  region           = var.region
+  region           = var.aws_regions
   ecs_cluster_name = module.compute.ecs_cluster_name
   alert_emails     = var.alert_emails
   tags             = local.tags

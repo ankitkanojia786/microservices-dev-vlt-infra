@@ -18,3 +18,24 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "aws_region" {
+  description = "AWS region to deploy resources"
+  type        = string
+  default     = "us-west-2"
+  
+}
+
+variable "country_environment" {
+  description = "Country environment identifier"
+  type        = string
+  default     = "usdev"
+  
+}
+
+variable "deployment_region" {
+  description = "Deployment region identifier"
+  type        = string
+  default     = "usw2"
+  
+}

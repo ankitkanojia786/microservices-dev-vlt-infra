@@ -49,3 +49,25 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "country_environment" {
+  description = "Country environment identifier"
+  type        = string
+  default     = "usdev"
+  
+}
+
+variable "deployment_region" {
+  description = "Deployment region identifier"
+  type        = string
+  default     = "usw2"
+  
+}
+
+variable "aws_region" {
+  description = "AWS region identifier"
+  type        = string
+  default     = "us-west-2"
+  
+}
+  

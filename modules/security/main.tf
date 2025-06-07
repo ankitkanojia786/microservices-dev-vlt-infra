@@ -1,5 +1,5 @@
 resource "aws_security_group" "alb_sg" {
-  name        = "${var.environment}-vlt-subscription-alb-sg"
+  name        = "${var.country_environment}-${var.deployment_region}-vlt-subscription-alb-sg"
   description = "Allow HTTP/HTTPS inbound traffic"
   vpc_id      = var.vpc_id
   
@@ -27,13 +27,13 @@ resource "aws_security_group" "alb_sg" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.environment}-vlt-subscription-alb-sg"
+      Name = "${var.country_environment}-${var.deployment_region}-vlt-subscription-alb-sg"
     }
   )
 }
 
 resource "aws_security_group" "ecs_sg" {
-  name        = "${var.environment}-vlt-subscription-ecs-sg"
+  name        = "${var.country_environment}-${var.deployment_region}-vlt-subscription-ecs-sg"
   description = "Allow traffic from ALB"
   vpc_id      = var.vpc_id
   
@@ -54,13 +54,13 @@ resource "aws_security_group" "ecs_sg" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.environment}-vlt-subscription-ecs-sg"
+      Name = "${var.country_environment}-${var.deployment_region}-vlt-subscription-ecs-sg"
     }
   )
 }
 
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "${var.environment}-vlt-subscription-ecs-task-execution-role"
+  name = "${var.country_environment}-${var.deployment_region}-vlt-subscription-ecs-task-execution-role"
   
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -78,7 +78,7 @@ resource "aws_iam_role" "ecs_task_execution_role" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.environment}-vlt-subscription-ecs-task-execution-role"
+      Name = "${var.country_environment}-${var.deployment_region}-vlt-subscription-ecs-task-execution-role"
     }
   )
 }

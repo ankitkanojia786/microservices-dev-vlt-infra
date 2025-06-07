@@ -1,8 +1,48 @@
-variable "region" {
+# aws_region = "us-west-2"
+# environment = "dev"
+# non_prd_env = "usnp
+# country_environment = "usdev"
+# deployment_region = "usw2"
+# project = "common"
+variable "aws_regions" {
   description = "AWS region to deploy resources"
   type        = string
   default     = "us-west-2"
 }
+# variable "non_prd_env" {
+#   description = "Non-production environment identifier"
+#   type        = string
+#   default     = "usnp"
+# }
+variable "country_environment" {
+  description = "Country environment identifier"
+  type        = string
+  default     = "usdev"
+}
+variable "deployment_region" {
+  description = "Deployment region identifier"
+  type        = string
+  default     = "usw2"
+}
+
+variable "aws_account_id" {
+  description = "AWS account ID"
+  type        = string
+  default     = "913524921936"
+}
+
+#variable "project" {
+#   description = "Project name"
+#   type        = string
+#   default     = "common"
+# }
+
+
+# variable "region" {
+#   description = "AWS region to deploy resources"
+#   type        = string
+#   default     = "us-west-2"
+# }
 
 variable "environment" {
   description = "Environment name (e.g., usdev-usw2, usqa-usw2)"

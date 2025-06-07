@@ -5,13 +5,13 @@ resource "aws_cloudwatch_log_group" "ecs_logs" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.environment}-vlt-subscription-logs"
+      Name = "${var.country_environment}-${var.deployment_region}-vlt-subscription-logs"
     }
   )
 }
 
 resource "aws_sns_topic" "alerts" {
-  name = "${var.environment}-vlt-subscription-alerts"
+  name = "${var.country_environment}-${var.deployment_region}-vlt-subscription-alerts"
   
   tags = var.tags
 }
@@ -24,7 +24,7 @@ resource "aws_sns_topic_subscription" "email_alerts" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "ecs_cpu_high" {
-  alarm_name          = "${var.environment}-vlt-subscription-cpu-high"
+  alarm_name          = "${var.country_environment}-${var.deployment_region}-vlt-subscription-cpu-high"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "CPUUtilization"

@@ -1,12 +1,12 @@
 resource "aws_apigatewayv2_api" "this" {
-  name          = "${var.environment}-vlt-subscription-apigateway"
+  name          = "${var.country_environment}-${var.deployment_region}-vlt-subscription-apigateway"
   protocol_type = "HTTP"
   
   tags = var.tags
 }
 
 resource "aws_apigatewayv2_vpc_link" "this" {
-  name               = "${var.environment}-vlt-subscription-vpc-link"
+  name               = "${var.country_environment}-${var.deployment_region}-vlt-subscription-vpc-link"
   security_group_ids = []
   subnet_ids         = var.subnet_ids
   

@@ -1,5 +1,5 @@
 resource "aws_lb" "this" {
-  name               = "${var.environment}-vlt-subscription-alb"
+  name               = "${var.country_environment}-${var.deployment_region}-vlt-subscription-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [var.alb_sg_id]
@@ -9,7 +9,7 @@ resource "aws_lb" "this" {
 }
 
 resource "aws_lb_target_group" "this" {
-  name        = "${var.environment}-vlt-subscription-tg"
+  name        = "${var.country_environment}-${var.deployment_region}-vlt-subscription-tg"
   port        = 80
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
@@ -18,7 +18,7 @@ resource "aws_lb_target_group" "this" {
   health_check {
     enabled             = true
     interval            = 30
-    path                = "/"
+    path                = "/health"
     port                = "traffic-port"
     healthy_threshold   = 2
     unhealthy_threshold = 2

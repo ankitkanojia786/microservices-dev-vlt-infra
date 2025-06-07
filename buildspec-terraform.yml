@@ -10,6 +10,10 @@ phases:
       - unzip terraform_install.zip
       - mv terraform /usr/bin/
       - terraform --version
+      - echo "Installing Docker..."
+      - amazon-linux-extras install docker -y
+      - service docker start
+      - docker --version
       
   pre_build:
     commands:

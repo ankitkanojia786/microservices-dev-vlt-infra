@@ -1,5 +1,5 @@
 resource "aws_ecs_task_definition" "this" {
-  family                   = "${var.environment}-vlt-subscription-ecs-task-definitions"
+  family                   = "${var.country_environment}-${var.deployment_region}-vlt-subscription-ecs-task-definitions"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
@@ -8,7 +8,7 @@ resource "aws_ecs_task_definition" "this" {
   
   container_definitions = jsonencode([
     {
-      name      = "${var.environment}-vlt-subscription-container"
+      name      = "${var.country_environment}-${var.deployment_region}-vlt-subscription-container"
       image     = var.ecr_image
       essential = true
       
@@ -24,7 +24,7 @@ resource "aws_ecs_task_definition" "this" {
         logDriver = "awslogs"
         options = {
           "awslogs-group"         = "/ecs/${var.cluster_name}"
-          "awslogs-region"        = "us-west-2"
+          "awslogs-region"        = "${var.aws_region}"
           "awslogs-stream-prefix" = "subscription"
         }
       }
@@ -49,7 +49,7 @@ resource "aws_ecs_service" "this" {
   
   load_balancer {
     target_group_arn = var.target_group_arn
-    container_name   = "${var.environment}-vlt-subscription-container"
+    container_name   = "${var.country_environment}-${var.deployment_region}-vlt-subscription-container"
     container_port   = var.container_port
   }
   

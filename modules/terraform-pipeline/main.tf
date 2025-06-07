@@ -107,19 +107,19 @@ resource "aws_iam_role_policy" "terraform_build_policy" {
       {
         Effect = "Allow",
         Action = [
-          "ec2:*",
-          "ecs:*",
-          "ecr:*",
-          "elasticloadbalancing:*",
-          "iam:*",
-          "logs:*",
-          "route53:*",
-          "s3:*",
-          "sns:*",
-          "sqs:*",
-          "cloudwatch:*",
-          "codebuild:*",
-          "codepipeline:*"
+          "ec2:usdev*",
+          "ecs:usdev*",
+          "ecr:usdev*",
+          "elasticloadbalancing:usdev*",
+          "iam:usdev*",
+          "logs:usdev*",
+         
+          "s3:usdev*",
+          "sns:usdev*",
+          
+          "cloudwatch:usdev*",
+          "codebuild:usdev*",
+          "codepipeline:usdev*"
         ],
         Resource = "*"
       }

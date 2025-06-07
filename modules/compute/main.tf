@@ -1,5 +1,5 @@
 resource "aws_ecs_cluster" "this" {
-  name = "${var.environment}-vlt-subscription-ecs-cluster"
+  name = "${var.country_environment}-${var.deployment_region}-vlt-subscription-ecs-cluster"
   
   setting {
     name  = "containerInsights"
