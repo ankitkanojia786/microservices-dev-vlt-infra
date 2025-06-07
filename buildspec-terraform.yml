@@ -11,8 +11,9 @@ phases:
       - mv terraform /usr/bin/
       - terraform --version
       - echo "Installing Docker..."
-      - amazon-linux-extras install docker -y
-      - service docker start
+      - yum update -y
+      - yum install -y docker
+      - service docker start || true
       - docker --version
       
   pre_build:
