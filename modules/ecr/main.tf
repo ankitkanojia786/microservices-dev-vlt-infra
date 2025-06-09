@@ -14,9 +14,14 @@ resource "aws_ecr_repository" "this" {
   }
 }
 
-# Only run this in environments where Docker is available
+# Only run this when the ECR repository is created
 resource "null_resource" "docker_push" {
   count = var.enable_docker_push ? 1 : 0
+  
+  # This will only trigger when the repository is created
+  triggers = {
+    repository_id = aws_ecr_repository.this.id
+  }
   
   provisioner "local-exec" {
     command = <<EOT
@@ -30,7 +35,6 @@ resource "null_resource" "docker_push" {
  
   depends_on = [aws_ecr_repository.this]
 }
-
 
 resource "aws_ecr_lifecycle_policy" "this" {
   repository = aws_ecr_repository.this.name
