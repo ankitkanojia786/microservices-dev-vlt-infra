@@ -20,6 +20,7 @@ phases:
     commands:
       - echo "Terraform init and validate..."
       - cd $CODEBUILD_SRC_DIR
+      - export AWS_REGION=us-west-2
       - terraform init -reconfigure
       - terraform validate
       

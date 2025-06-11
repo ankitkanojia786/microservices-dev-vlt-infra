@@ -38,12 +38,14 @@ module "security" {
 
 # ALB module
 module "alb" {
-  source            = "./modules/alb"
-  environment       = var.environment
-  vpc_id            = module.networking.vpc_id
-  public_subnet_ids = module.networking.public_subnet_ids
-  alb_sg_id         = module.security.alb_sg_id
-  tags              = local.tags
+  source             = "./modules/alb"
+  environment        = var.environment
+  country_environment = var.country_environment
+  deployment_region  = var.deployment_region
+  vpc_id             = module.networking.vpc_id
+  public_subnet_ids  = module.networking.public_subnet_ids
+  alb_sg_id          = module.security.alb_sg_id
+  tags               = local.tags
 }
 
 # Compute module: ECS Cluster only
