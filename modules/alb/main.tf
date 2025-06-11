@@ -1,6 +1,6 @@
 resource "aws_lb" "this" {
   name               = "${var.country_environment}-${var.deployment_region}-vlt-subscription-alb"
-  internal           = false
+  internal           = true
   load_balancer_type = "application"
   security_groups    = [var.alb_sg_id]
   subnets            = var.public_subnet_ids
