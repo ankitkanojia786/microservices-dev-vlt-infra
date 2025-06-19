@@ -1,22 +1,31 @@
 resource "aws_apigatewayv2_api" "this" {
-  name          = "${var.country_environment}-${var.deployment_region}-vlt-subscription-apigateway"
+  name          = "${var.environment}-vlt-subscription-microservice-apigateway"
   protocol_type = "HTTP"
   
-  tags = var.tags
+  tags = {
+    "ohi:project"     = "vlt"
+    "ohi:application" = "vlt-mobile"
+    "ohi:module"      = "vlt-subscription"
+    "ohi:environment" = var.environment
+  }
 }
 
-resource "aws_apigatewayv2_vpc_link" "this" {
-  name               = "${var.country_environment}-${var.deployment_region}-vlt-subscription-vpc-link"
-  security_group_ids = []
-  subnet_ids         = var.subnet_ids
+resource "aws_apigatewayv2_stage" "this" {
+  api_id      = aws_apigatewayv2_api.this.id
+  name        = "$default"
+  auto_deploy = true
   
-  tags = var.tags
+  tags = {
+    "ohi:project"     = "vlt"
+    "ohi:application" = "vlt-mobile"
+    "ohi:module"      = "vlt-subscription"
+    "ohi:environment" = var.environment
+  }
 }
 
 resource "aws_apigatewayv2_integration" "this" {
-  api_id           = aws_apigatewayv2_api.this.id
-  integration_type = "HTTP_PROXY"
-  
+  api_id             = aws_apigatewayv2_api.this.id
+  integration_type   = "HTTP_PROXY"
   integration_uri    = var.alb_listener_arn
   integration_method = "ANY"
   connection_type    = "VPC_LINK"
@@ -26,14 +35,18 @@ resource "aws_apigatewayv2_integration" "this" {
 resource "aws_apigatewayv2_route" "this" {
   api_id    = aws_apigatewayv2_api.this.id
   route_key = "ANY /{proxy+}"
-  
-  target = "integrations/${aws_apigatewayv2_integration.this.id}"
+  target    = "integrations/${aws_apigatewayv2_integration.this.id}"
 }
 
-resource "aws_apigatewayv2_stage" "this" {
-  api_id      = aws_apigatewayv2_api.this.id
-  name        = "$default"
-  auto_deploy = true
+resource "aws_apigatewayv2_vpc_link" "this" {
+  name               = "${var.environment}-vlt-subscription-microservice-vpclink"
+  security_group_ids = []
+  subnet_ids         = var.subnet_ids
   
-  tags = var.tags
+  tags = {
+    "ohi:project"     = "vlt"
+    "ohi:application" = "vlt-mobile"
+    "ohi:module"      = "vlt-subscription"
+    "ohi:environment" = var.environment
+  }
 }

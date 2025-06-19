@@ -1,21 +1,21 @@
 resource "aws_ecs_task_definition" "this" {
-  family                   = "${var.country_environment}-${var.deployment_region}-vlt-subscription-ecs-task-definitions"
+  family                   = "${var.environment}-vlt-subscription-microservice-ecs-task-definitions"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"
-  memory                   = "512"
+  cpu                      = var.container_cpu
+  memory                   = var.container_memory
   execution_role_arn       = var.task_exec_role_arn
   
   container_definitions = jsonencode([
     {
-      name      = "${var.country_environment}-${var.deployment_region}-vlt-subscription-container"
+      name      = "subscription-service"
       image     = var.ecr_image
       essential = true
       
       portMappings = [
         {
-          containerPort = 80
-          hostPort      = 80
+          containerPort = var.container_port
+          hostPort      = var.container_port
           protocol      = "tcp"
         }
       ]
@@ -23,22 +23,39 @@ resource "aws_ecs_task_definition" "this" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          "awslogs-group"         = "/ecs/${var.cluster_name}"
-          "awslogs-region"        = "${var.aws_region}"
-          "awslogs-stream-prefix" = "subscription"
+          "awslogs-group"         = "/ecs/${var.environment}-vlt-subscription-microservice"
+          "awslogs-region"        = data.aws_region.current.name
+          "awslogs-stream-prefix" = "ecs"
         }
       }
     }
   ])
   
-  tags = var.tags
+  tags = {
+    "ohi:project"     = "vlt"
+    "ohi:application" = "vlt-mobile"
+    "ohi:module"      = "vlt-subscription"
+    "ohi:environment" = var.environment
+  }
+}
+
+resource "aws_cloudwatch_log_group" "this" {
+  name              = "/ecs/${var.environment}-vlt-subscription-microservice"
+  retention_in_days = 30
+  
+  tags = {
+    "ohi:project"     = "vlt"
+    "ohi:application" = "vlt-mobile"
+    "ohi:module"      = "vlt-subscription"
+    "ohi:environment" = var.environment
+  }
 }
 
 resource "aws_ecs_service" "this" {
-  name            = var.service_name
+  name            = "${var.environment}-vlt-subscription-microservice-ecs-service"
   cluster         = var.cluster_name
   task_definition = aws_ecs_task_definition.this.arn
-  desired_count   = 1
+  desired_count   = var.desired_count
   launch_type     = "FARGATE"
   
   network_configuration {
@@ -49,9 +66,14 @@ resource "aws_ecs_service" "this" {
   
   load_balancer {
     target_group_arn = var.target_group_arn
-    container_name   = "${var.country_environment}-${var.deployment_region}-vlt-subscription-container"
+    container_name   = "subscription-service"
     container_port   = var.container_port
   }
   
-  tags = var.tags
+  tags = {
+    "ohi:project"     = "vlt"
+    "ohi:application" = "vlt-mobile"
+    "ohi:module"      = "vlt-subscription"
+    "ohi:environment" = var.environment
+  }
 }

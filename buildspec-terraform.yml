@@ -29,6 +29,7 @@ phases:
       - echo "Running Terraform $TF_COMMAND..."
       - if [ "$TF_COMMAND" = "plan" ]; then terraform plan -out=tfplan; fi
       - if [ "$TF_COMMAND" = "apply" ]; then terraform apply -auto-approve; fi
+      - if [ "$TF_COMMAND" = "destroy" ]; then terraform destroy -auto-approve; fi
       
   post_build:
     commands:

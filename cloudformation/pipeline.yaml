@@ -1,26 +1,45 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'CloudFormation template for Terraform Infrastructure Pipeline'
+Description: 'CloudFormation template for ALR Subscription Microservice Terraform Infrastructure Pipeline'
 
 Parameters:
   ProjectName:
     Type: String
-    Default: vlt-subscription
+    Default: alr-subscription-microservice
     Description: Project name used for resource naming
   
   Environment:
     Type: String
     Default: usdev-usw2
     AllowedValues:
+      # US West 2 (Oregon)
       - usdev-usw2
       - usqa-usw2
       - usstg-usw2
       - usprod-usw2
       - usbeta-usw2
-    Description: Environment name
+      # US East 1 (N. Virginia)
+      - usdev-use1
+      - usqa-use1
+      - usstg-use1
+      - usprod-use1
+      - usbeta-use1
+      # US East 2 (Ohio)
+      - usdev-use2
+      - usqa-use2
+      - usstg-use2
+      - usprod-use2
+      - usbeta-use2
+      # EU West 1 (Ireland)
+      - eudev-euw1
+      - euqa-euw1
+      - eustg-euw1
+      - euprod-euw1
+      - eubeta-euw1
+    Description: Environment name with region
   
   TerraformRepositoryName:
     Type: String
-    Default: subscription-microservices-testing
+    Default: microservices-dev-vlt-infra
     Description: GitHub repository name for Terraform code
   
   TerraformRepositoryOwner:
@@ -38,24 +57,26 @@ Resources:
   TerraformArtifactBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub '${Environment}-vlt-tf-subscription-microservices-artifacts'
+      BucketName: !Sub '${Environment}-alr-subscription-microservice-tf-artifacts'
       VersioningConfiguration:
         Status: Enabled
       Tags:
         - Key: ohi:project
-          Value: vlt
+          Value: alr
         - Key: ohi:application
-          Value: vlt-subscription
+          Value: alr-mobile
         - Key: ohi:module
-          Value: vlt-subscription-be
+          Value: alr-subscription
         - Key: ohi:environment
           Value: !Ref Environment
+        - Key: ohi:stack-name
+          Value: !Sub '${Environment}-alr-subscription-microservice-tf-init-pipeline'
 
   # IAM role for CodePipeline
   CodePipelineServiceRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub '${Environment}-vlt-tf-subscription-microservices-pipeline-role'
+      RoleName: !Sub '${Environment}-alr-subscription-microservice-pipeline-role'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -68,19 +89,21 @@ Resources:
         - arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
       Tags:
         - Key: ohi:project
-          Value: vlt
+          Value: alr
         - Key: ohi:application
-          Value: vlt-subscription
+          Value: alr-mobile
         - Key: ohi:module
-          Value: vlt-subscription-be
+          Value: alr-subscription
         - Key: ohi:environment
           Value: !Ref Environment
+        - Key: ohi:stack-name
+          Value: !Sub '${Environment}-alr-subscription-microservice-tf-init-pipeline'
 
   # IAM role for CodeBuild
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub '${Environment}-vlt-tf-subscription-microservices-build-role'
+      RoleName: !Sub '${Environment}-alr-subscription-microservice-build-role'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -127,20 +150,22 @@ Resources:
                 Resource: '*'
       Tags:
         - Key: ohi:project
-          Value: vlt
+          Value: alr
         - Key: ohi:application
-          Value: vlt-subscription
+          Value: alr-mobile
         - Key: ohi:module
-          Value: vlt-subscription-be
+          Value: alr-subscription
         - Key: ohi:environment
           Value: !Ref Environment
+        - Key: ohi:stack-name
+          Value: !Sub '${Environment}-alr-subscription-microservice-tf-init-pipeline'
 
   # CodeBuild project for Terraform
   TerraformCodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub '${Environment}-vlt-tf-subscription-microservices-build'
-      Description: 'CodeBuild project for Terraform infrastructure'
+      Name: !Sub '${Environment}-alr-subscription-microservice-tf-build'
+      Description: 'CodeBuild project for ALR Subscription Microservice Terraform infrastructure'
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
       Artifacts:
         Type: CODEPIPELINE
@@ -154,42 +179,44 @@ Resources:
             Value: 'true'
           - Name: ENVIRONMENT
             Value: !Ref Environment
-          - Name: TERRAFORM_ROLE_ARN
-            Value: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${Environment}-vlt-tf-subscription-microservices-terraform-role'
       Source:
         Type: CODEPIPELINE
         BuildSpec: buildspec-terraform.yml
       Tags:
         - Key: ohi:project
-          Value: vlt
+          Value: alr
         - Key: ohi:application
-          Value: vlt-subscription
+          Value: alr-mobile
         - Key: ohi:module
-          Value: vlt-subscription-be
+          Value: alr-subscription
         - Key: ohi:environment
           Value: !Ref Environment
+        - Key: ohi:stack-name
+          Value: !Sub '${Environment}-alr-subscription-microservice-tf-init-pipeline'
 
   # GitHub connection for CodeStar
   GitHubConnection:
     Type: AWS::CodeStarConnections::Connection
     Properties:
-      ConnectionName: !Sub '${Environment}-vlt-github-conn'
+      ConnectionName: !Sub '${Environment}-alr-github-connection'
       ProviderType: GitHub
       Tags:
         - Key: ohi:project
-          Value: vlt
+          Value: alr
         - Key: ohi:application
-          Value: vlt-subscription
+          Value: alr-mobile
         - Key: ohi:module
-          Value: vlt-subscription-be
+          Value: alr-subscription
         - Key: ohi:environment
           Value: !Ref Environment
+        - Key: ohi:stack-name
+          Value: !Sub '${Environment}-alr-subscription-microservice-tf-init-pipeline'
 
   # CodePipeline for Terraform
   TerraformPipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      Name: !Sub '${Environment}-vlt-tf-subscription-microservices-infra-pipeline'
+      Name: !Sub '${Environment}-alr-subscription-microservice-pipeline'
       RoleArn: !GetAtt CodePipelineServiceRole.Arn
       ArtifactStore:
         Type: S3
@@ -247,13 +274,15 @@ Resources:
                 - Name: SourceCode
       Tags:
         - Key: ohi:project
-          Value: vlt
+          Value: alr
         - Key: ohi:application
-          Value: vlt-subscription
+          Value: alr-mobile
         - Key: ohi:module
-          Value: vlt-subscription-be
+          Value: alr-subscription
         - Key: ohi:environment
           Value: !Ref Environment
+        - Key: ohi:stack-name
+          Value: !Sub '${Environment}-alr-subscription-microservice-tf-init-pipeline'
 
 Outputs:
   TerraformPipelineName:

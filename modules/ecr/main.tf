@@ -1,5 +1,5 @@
 resource "aws_ecr_repository" "this" {
-  name                 = "${var.country_environment}-${var.deployment_region}-vlt-subscription-ecr"
+  name                 = "${var.environment}-alr-subscription-microservice-ecr"
   image_tag_mutability = "MUTABLE"
   
   image_scanning_configuration {
@@ -7,33 +7,12 @@ resource "aws_ecr_repository" "this" {
   }
   
   tags = {
-    "ohi:project"     = "vlt"
-    "ohi:application" = "vlt-subscription"
-    "ohi:module"      = "vlt-subscription-be"
+    "ohi:project"     = "alr"
+    "ohi:application" = "alr-mobile"
+    "ohi:module"      = "alr-subscription"
     "ohi:environment" = var.environment
+    "ohi:stack-name"  = "${var.environment}-alr-subscription-microservice-tf-init-pipeline"
   }
-}
-
-# Only run this when the ECR repository is created
-resource "null_resource" "docker_push" {
-  count = var.enable_docker_push ? 1 : 0
-  
-  # This will only trigger when the repository is created
-  triggers = {
-    repository_id = aws_ecr_repository.this.id
-  }
-  
-  provisioner "local-exec" {
-    command = <<EOT
-      aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
-      cd images
-      docker build -t ${aws_ecr_repository.this.name} .
-      docker tag ${aws_ecr_repository.this.name}:latest ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${aws_ecr_repository.this.name}:latest
-      docker push ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${aws_ecr_repository.this.name}:latest
-    EOT
-  }
- 
-  depends_on = [aws_ecr_repository.this]
 }
 
 resource "aws_ecr_lifecycle_policy" "this" {

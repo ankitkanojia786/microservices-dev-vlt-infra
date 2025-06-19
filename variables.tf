@@ -1,28 +1,8 @@
-# aws_region = "us-west-2"
-# environment = "dev"
-# non_prd_env = "usnp
-# country_environment = "usdev"
-# deployment_region = "usw2"
-# project = "common"
+# AWS Configuration
 variable "aws_regions" {
   description = "AWS region to deploy resources"
   type        = string
   default     = "us-west-2"
-}
-# variable "non_prd_env" {
-#   description = "Non-production environment identifier"
-#   type        = string
-#   default     = "usnp"
-# }
-variable "country_environment" {
-  description = "Country environment identifier"
-  type        = string
-  default     = "usdev"
-}
-variable "deployment_region" {
-  description = "Deployment region identifier"
-  type        = string
-  default     = "usw2"
 }
 
 variable "aws_account_id" {
@@ -31,25 +11,51 @@ variable "aws_account_id" {
   default     = "913524921936"
 }
 
-#variable "project" {
-#   description = "Project name"
-#   type        = string
-#   default     = "common"
-# }
-
-
-# variable "region" {
-#   description = "AWS region to deploy resources"
-#   type        = string
-#   default     = "us-west-2"
-# }
-
+# Environment Configuration
 variable "environment" {
   description = "Environment name (e.g., usdev-usw2, usqa-usw2)"
   type        = string
   default     = "usdev-usw2"
 }
 
+variable "country_environment" {
+  description = "Country environment identifier"
+  type        = string
+  default     = "usdev"
+}
+
+variable "deployment_region" {
+  description = "Deployment region identifier"
+  type        = string
+  default     = "usw2"
+}
+
+# Project Configuration
+variable "project_name" {
+  description = "Project name"
+  type        = string
+  default     = "alr"
+}
+
+variable "application_name" {
+  description = "Application name"
+  type        = string
+  default     = "alr-mobile"
+}
+
+variable "module_name" {
+  description = "Module name"
+  type        = string
+  default     = "alr-subscription"
+}
+
+variable "service_name" {
+  description = "Service name for resources"
+  type        = string
+  default     = "alr-subscription-microservice"
+}
+
+# Network Configuration
 variable "vpc_cidr" {
   description = "CIDR block for the VPC"
   type        = string
@@ -68,6 +74,7 @@ variable "private_subnet_cidrs" {
   default     = ["10.0.3.0/24", "10.0.4.0/24"]
 }
 
+# Container Configuration
 variable "container_port" {
   description = "Port the container listens on"
   type        = number
@@ -92,21 +99,18 @@ variable "desired_count" {
   default     = 1
 }
 
+# Monitoring Configuration
 variable "alert_emails" {
   description = "List of email addresses to receive alerts"
   type        = list(string)
   default     = []
 }
 
-# Common tags
+# Common tags (deprecated - now using variables above)
 variable "tags" {
   description = "Common tags for all resources"
   type        = map(string)
-  default     = {
-    "ohi:project"     = "vlt"
-    "ohi:application" = "vlt-subscription"
-    "ohi:module"      = "vlt-subscription-be"
-  }
+  default     = {}
 }
 
 # Terraform CI/CD variables

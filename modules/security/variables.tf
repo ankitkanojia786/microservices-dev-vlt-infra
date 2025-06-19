@@ -11,23 +11,10 @@ variable "vpc_id" {
 variable "container_port" {
   description = "Port the container listens on"
   type        = number
-  default     = 80
 }
 
 variable "tags" {
   description = "Common tags for all resources"
   type        = map(string)
   default     = {}
-}
-
-variable "country_environment" {
-  description = "Country environment identifier"
-  type        = string
-  default     = "usdev"
-}
-
-variable "deployment_region" {
-  description = "Deployment region identifier"
-  type        = string
-  default     = "usw2"
 }

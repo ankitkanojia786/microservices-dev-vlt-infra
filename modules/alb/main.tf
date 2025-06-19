@@ -1,15 +1,23 @@
 resource "aws_lb" "this" {
-  name               = "${var.country_environment}-${var.deployment_region}-vlt-subscription-alb"
-  internal           = true
+  name               = "${var.environment}-alr-subscription-microservice-elb"
+  internal           = false
   load_balancer_type = "application"
   security_groups    = [var.alb_sg_id]
   subnets            = var.public_subnet_ids
   
-  tags = var.tags
+  enable_deletion_protection = false
+  
+  tags = {
+    "ohi:project"     = "alr"
+    "ohi:application" = "alr-mobile"
+    "ohi:module"      = "alr-subscription"
+    "ohi:environment" = var.environment
+    "ohi:stack-name"  = "${var.environment}-alr-subscription-microservice-tf-init-pipeline"
+  }
 }
 
 resource "aws_lb_target_group" "this" {
-  name        = "${var.country_environment}-${var.deployment_region}-vlt-subscription-tg"
+  name        = "${var.environment}-alr-subscription-microservice-tg"
   port        = 80
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
@@ -18,16 +26,21 @@ resource "aws_lb_target_group" "this" {
   health_check {
     enabled             = true
     interval            = 30
-    path                = "/health"
+    path                = "/"
     port                = "traffic-port"
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
     timeout             = 5
-    protocol            = "HTTP"
-    matcher             = "200-399"
+    matcher             = "200-299"
   }
   
-  tags = var.tags
+  tags = {
+    "ohi:project"     = "alr"
+    "ohi:application" = "alr-mobile"
+    "ohi:module"      = "alr-subscription"
+    "ohi:environment" = var.environment
+    "ohi:stack-name"  = "${var.environment}-alr-subscription-microservice-tf-init-pipeline"
+  }
 }
 
 resource "aws_lb_listener" "http" {
