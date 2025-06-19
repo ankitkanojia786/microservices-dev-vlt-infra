@@ -1,88 +1,123 @@
-# Subscription Microservice Infrastructure
+# ALR Subscription Microservice Infrastructure
 
-This repository contains the infrastructure code for the subscription microservice.
+This repository contains Terraform infrastructure code for the ALR Subscription Microservice.
 
-## Infrastructure Components
+## Overview
 
-- VPC with public and private subnets
-- ECS Cluster (`usdev-usw2-vlt-subscription-ecs-cluster`)
-- ECS Service (`usdev-usw2-vlt-subscription-ecs-service`)
-- ECR Repository (`usdev-usw2-vlt-subscription-ecr`)
-- Application Load Balancer (`usdev-usw2-vlt-subscription-alb`)
-- API Gateway (`usdev-usw2-vlt-subscription-apigateway`)
-- Security Groups and IAM Roles
+This infrastructure pipeline creates the foundational AWS resources needed for the ALR subscription microservice deployment.
 
-## Infrastructure Pipeline
+## Architecture
 
-The infrastructure is deployed using a CloudFormation-managed Terraform pipeline:
+### Pipeline 1: Infrastructure Pipeline (Current)
+Creates the following resources:
+- **VPC & Networking**: Subnets, Route Tables, NAT Gateway, Internet Gateway
+- **Security**: Security Groups, IAM Roles
+- **Load Balancer**: Application Load Balancer (ALB) and Target Group
+- **Container Registry**: ECR Repository
+- **Parameter Store**: Infrastructure values for Pipeline 2
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                                                                         │
-│                      Infrastructure Pipeline (CloudFormation)           │
-│                                                                         │
-└───────────────────────────────────┬─────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                                                                         │
-│                      Terraform Infrastructure Pipeline                  │
-│                                                                         │
-│  ┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────────────┐    │
-│  │         │     │         │     │         │     │                 │    │
-│  │ Source  ├────►│  Plan   ├────►│ Approve ├────►│     Apply      │    │
-│  │         │     │         │     │         │     │                 │    │
-│  └─────────┘     └─────────┘     └─────────┘     └────────┬────────┘    │
-│                                                           │             │
-└───────────────────────────────────────────────────────────┼─────────────┘
-                                                            │
-                                                            ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                                                                         │
-│                        AWS Infrastructure                               │
-│                                                                         │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐        │
-│  │         │  │         │  │         │  │         │  │         │        │
-│  │   VPC   │  │   ECS   │  │   ECR   │  │   ALB   │  │  API GW │        │
-│  │         │  │         │  │         │  │         │  │         │        │
-│  └─────────┘  └─────────┘  └─────────┘  └─────────┘  └─────────┘        │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+### Pipeline 2: Application Pipeline (Future)
+Will deploy:
+- ECS Cluster, Service, and Task Definitions
+- API Gateway
+- CloudWatch Monitoring
 
-## Environment Support
+## Resource Naming Convention
 
-The infrastructure supports multiple environments:
+All resources follow the pattern: `<country+env>-<aws-region>-alr-subscription-<resource-type>`
 
-- Development (`usdev-usw2`)
-- QA (`usqa-usw2`)
-- Staging (`usstg-usw2`)
-- Production (`usprod-usw2`)
-- Beta (`usbeta-usw2`)
+Examples:
+- ALB: `usdev-usw2-alr-subscription-alb`
+- Target Group: `usdev-usw2-alr-subscription-tg`
+- ECR: `usdev-usw2-alr-subscription-microservice-ecr`
+- VPC: `usdev-usw2-alr-subscription-microservice-vpc`
 
-## Deployment Instructions
+**Note**: ALB and Target Group names are shortened to comply with AWS 32-character limit.
 
-To deploy the infrastructure pipeline:
+## Supported Regions
 
-```bash
-aws cloudformation deploy \
-  --template-file cloudformation/pipeline.yaml \
-  --stack-name usdev-usw2-vlt-subscription-infra-pipeline \
-  --parameter-overrides \
-    Environment=usdev-usw2 \
-  --capabilities CAPABILITY_NAMED_IAM
-```
+- **US West 2**: usdev-usw2, usqa-usw2, usstg-usw2, usprod-usw2
+- **US East 1**: usdev-use1, usqa-use1, usstg-use1, usprod-use1
+- **US East 2**: usdev-use2, usqa-use2, usstg-use2, usprod-use2
+- **EU West 1**: eudev-euw1, euqa-euw1, eustg-euw1, euprod-euw1
 
-## Required Tags
+## Deployment
+
+### Prerequisites
+1. AWS CLI configured
+2. GitHub repository access
+3. CloudFormation template deployment
+
+### Steps
+1. Delete old CloudFormation stack (if exists): `usdev-usw2-vlt-subscription-infra-pipeline`
+2. Deploy new CloudFormation stack: `usdev-usw2-alr-subscription-infra-pipeline-stack`
+   - Template: `cloudformation/pipeline.yaml`
+   - Environment parameter: `usdev-usw2`
+3. Configure GitHub connection in CodePipeline
+4. Pipeline will automatically provision infrastructure
+
+### CloudFormation Stack Names
+- **Old Stack**: `usdev-usw2-vlt-subscription-infra-pipeline` (to be deleted)
+- **New Stack**: `usdev-usw2-alr-subscription-infra-pipeline-stack`
+
+## Parameter Store
+
+Infrastructure values are stored in AWS Parameter Store for Pipeline 2:
+- `/${environment}/alr-subscription-microservice/vpc-id`
+- `/${environment}/alr-subscription-microservice/private-subnet-ids`
+- `/${environment}/alr-subscription-microservice/public-subnet-ids`
+- `/${environment}/alr-subscription-microservice/alb-arn`
+- `/${environment}/alr-subscription-microservice/alb-dns-name`
+- `/${environment}/alr-subscription-microservice/target-group-arn`
+- `/${environment}/alr-subscription-microservice/ecs-security-group-id`
+- `/${environment}/alr-subscription-microservice/ecs-task-execution-role-arn`
+- `/${environment}/alr-subscription-microservice/ecr-repository-url`
+- `/${environment}/alr-subscription-microservice/ecr-repository-name`
+
+## Tags
 
 All resources are tagged with:
+- `ohi:project`: alr
+- `ohi:application`: alr-mobile
+- `ohi:module`: alr-subscription
+- `ohi:environment`: Environment identifier (e.g., usdev-usw2)
+- `ohi:stack-name`: `${environment}-alr-subscription-microservice-tf-init-pipeline`
 
-- `ohi:project = vlt`
-- `ohi:application = vlt-subscription`
-- `ohi:module = vlt-subscription-be`
-- `ohi:environment = usdev-usw2` (varies by environment)
+## Files Structure
 
-## Application Deployment
+```
+├── cloudformation/          # CloudFormation templates
+│   └── pipeline.yaml       # Infrastructure pipeline template
+├── modules/                 # Terraform modules
+│   ├── networking/         # VPC, subnets, routing
+│   ├── security/           # Security groups, IAM
+│   ├── alb/               # Application Load Balancer
+│   ├── ecr/               # Container registry
+│   ├── compute/           # ECS Cluster (commented out)
+│   ├── ecs-service/       # ECS Service (commented out)
+│   ├── api-gateway/       # API Gateway (commented out)
+│   └── monitoring/        # CloudWatch (commented out)
+├── environments/           # Environment-specific variables
+├── scripts/               # Deployment scripts
+├── main.tf                # Main Terraform configuration
+├── variables.tf           # Variable definitions
+├── outputs.tf             # Output definitions
+├── provider.tf            # AWS provider configuration
+├── backend.tf             # Terraform backend configuration
+└── buildspec-terraform.yml # CodeBuild specification
+```
 
-The application code and deployment pipeline are maintained in a separate repository:
-[subscription-microservices-app](https://github.com/ankitkanojia786/subscription-microservices-app)
+## Recent Updates
+
+- **Updated from VLT to ALR naming conventions**
+- **Added multi-region support**
+- **Implemented Parameter Store integration for Pipeline 2**
+- **Optimized ALB/Target Group naming for AWS limits**
+- **Added comprehensive variable support**
+
+## Support
+
+For questions or issues, contact the infrastructure team.
+
+---
+**Last Updated**: Infrastructure ready for ALR deployment with proper naming conventions and multi-region support.
