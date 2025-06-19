@@ -1,5 +1,5 @@
 resource "aws_lb" "this" {
-  name_prefix        = "alr-"
+  name               = "${var.environment}-alr-subscription-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [var.alb_sg_id]
@@ -8,7 +8,6 @@ resource "aws_lb" "this" {
   enable_deletion_protection = false
   
   tags = {
-    Name              = "${var.environment}-alr-subscription-microservice-alb"
     "ohi:project"     = "alr"
     "ohi:application" = "alr-mobile"
     "ohi:module"      = "alr-subscription"
@@ -18,7 +17,7 @@ resource "aws_lb" "this" {
 }
 
 resource "aws_lb_target_group" "this" {
-  name_prefix = "alr-"
+  name        = "${var.environment}-alr-subscription-tg"
   port        = 80
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
@@ -36,7 +35,6 @@ resource "aws_lb_target_group" "this" {
   }
   
   tags = {
-    Name              = "${var.environment}-alr-subscription-microservice-tg"
     "ohi:project"     = "alr"
     "ohi:application" = "alr-mobile"
     "ohi:module"      = "alr-subscription"
