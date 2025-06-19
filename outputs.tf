@@ -1,66 +1,58 @@
-# ---------------------
-# Infrastructure Outputs
-# ---------------------
-
+# VPC and Networking Outputs
 output "vpc_id" {
-  value       = module.networking.vpc_id
   description = "ID of the VPC"
+  value       = module.networking.vpc_id
 }
 
-output "ecs_cluster_name" {
-  value       = module.compute.ecs_cluster_name
-  description = "Name of the ECS cluster"
+output "private_subnet_ids" {
+  description = "IDs of the private subnets"
+  value       = module.networking.private_subnet_ids
 }
 
-output "ecs_service_name" {
-  value       = module.ecs_service.service_name
-  description = "Name of the ECS service"
+output "public_subnet_ids" {
+  description = "IDs of the public subnets"
+  value       = module.networking.public_subnet_ids
 }
 
+# ALB Outputs
 output "alb_dns_name" {
+  description = "DNS name of the load balancer"
   value       = module.alb.alb_dns_name
-  description = "DNS name of the Application Load Balancer"
 }
 
-output "ecr_repo_url" {
-  value       = module.ecr.ecr_repo_url
+output "alb_arn" {
+  description = "ARN of the load balancer"
+  value       = module.alb.alb_arn
+}
+
+output "target_group_arn" {
+  description = "ARN of the target group"
+  value       = module.alb.target_group_arn
+}
+
+# Security Outputs
+output "alb_security_group_id" {
+  description = "ID of the ALB security group"
+  value       = module.security.alb_sg_id
+}
+
+output "ecs_security_group_id" {
+  description = "ID of the ECS security group"
+  value       = module.security.ecs_sg_id
+}
+
+output "ecs_task_execution_role_arn" {
+  description = "ARN of the ECS task execution role"
+  value       = module.security.ecs_task_execution_role_arn
+}
+
+# ECR Outputs
+output "ecr_repository_url" {
   description = "URL of the ECR repository"
+  value       = module.ecr.ecr_repo_url
 }
-
-output "cloudwatch_log_group" {
-  value       = module.monitoring.log_group_name
-  description = "Name of the CloudWatch log group"
-}
-
-output "api_gateway_url" {
-  value       = module.api_gateway.api_gateway_url
-  description = "URL of the API Gateway"
-}
-
-# ---------------------
-# Pipeline Outputs
-# ---------------------
-
-output "terraform_pipeline_name" {
-  value       = module.terraform_pipeline.pipeline_name
-  description = "Name of the Terraform pipeline"
-}
-
-output "terraform_artifact_bucket" {
-  value       = module.terraform_pipeline.artifact_bucket
-  description = "Name of the S3 bucket for Terraform artifacts"
-}
-
-# ---------------------
-# Application Pipeline Outputs
-# ---------------------
 
 output "ecr_repository_name" {
-  value       = "${var.environment}-vlt-subscription-ecr"
-  description = "Name of the ECR repository for the application pipeline"
-}
-
-output "task_definition_family" {
-  value       = "${var.environment}-vlt-subscription-ecs-task-definitions"
-  description = "Family name of the ECS task definition for the application pipeline"
+  description = "Name of the ECR repository"
+  value       = module.ecr.ecr_repo_name
 }
