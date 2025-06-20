@@ -201,6 +201,10 @@ Resources:
                 Resource:
                   - !GetAtt PlanCodeBuildProject.Arn
                   - !GetAtt ApplyCodeBuildProject.Arn
+              - Effect: Allow
+                Action:
+                  - codeconnections:UseConnection
+                Resource: !Ref GitHubConnectionArn
 
 
 
