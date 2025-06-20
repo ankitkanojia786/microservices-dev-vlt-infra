@@ -1,0 +1,293 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'ALR Infrastructure Pipeline - GitHub Source -> Plan -> Manual Approval -> Apply'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: usdev-usw2
+    AllowedValues:
+      - usdev-usw2
+      - usqa-usw2
+      - usstg-usw2
+      - usprod-usw2
+      - usbeta-usw2
+    Description: Environment for the pipeline
+
+  GitHubRepo:
+    Type: String
+    Default: ankitkanojia786/microservices-dev-vlt-infra
+    Description: GitHub repository (owner/repo)
+
+  GitHubBranch:
+    Type: String
+    Default: main
+    Description: GitHub branch
+
+  GitHubConnectionArn:
+    Type: String
+    Default: arn:aws:codeconnections:us-west-2:913524921936:connection/e969f690-6a17-4e87-ba3c-6ee96cdf88ff
+    Description: GitHub CodeStar connection ARN
+
+
+
+Resources:
+  # S3 Bucket for Pipeline Artifacts
+  PipelineArtifactsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Environment}-alr-pipeline-artifacts'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # CodeBuild Service Role
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Environment}-alr-codebuild-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/PowerUserAccess
+      Policies:
+        - PolicyName: CodeBuildPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource: !Sub '${PipelineArtifactsBucket}/*'
+
+  # CodeBuild Project for Plan
+  PlanCodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub '${Environment}-alr-infra-plan'
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:3.0
+        EnvironmentVariables:
+          - Name: STATE_FILE_BUCKET
+            Value: !If 
+              - IsProdEnvironment
+              - alr-prod-terraform-state
+              - alr-nonprod-terraform-state
+          - Name: STATE_FILE_PATH
+            Value: !Sub 
+              - '${EnvType}/alr-infra/terraform.tfstate'
+              - EnvType: !If 
+                  - IsDevEnvironment
+                  - dev
+                  - !If 
+                      - IsQAEnvironment
+                      - qa
+                      - !If 
+                          - IsStgEnvironment
+                          - stg
+                          - !If 
+                              - IsProdEnvironment
+                              - prod
+                              - beta
+          - Name: REGION
+            Value: !Ref AWS::Region
+          - Name: DB_TABLE
+            Value: !If 
+              - IsProdEnvironment
+              - terraform-state-lock-prod
+              - terraform-state-lock
+          - Name: TF_VAR
+            Value: !Sub '../tfvars-file/${Environment}.tfvars'
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: buildspec-plan.yaml
+
+  # CodeBuild Project for Apply
+  ApplyCodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub '${Environment}-alr-infra-apply'
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:3.0
+        EnvironmentVariables:
+          - Name: STATE_FILE_BUCKET
+            Value: !If 
+              - IsProdEnvironment
+              - alr-prod-terraform-state
+              - alr-nonprod-terraform-state
+          - Name: STATE_FILE_PATH
+            Value: !Sub 
+              - '${EnvType}/alr-infra/terraform.tfstate'
+              - EnvType: !If 
+                  - IsDevEnvironment
+                  - dev
+                  - !If 
+                      - IsQAEnvironment
+                      - qa
+                      - !If 
+                          - IsStgEnvironment
+                          - stg
+                          - !If 
+                              - IsProdEnvironment
+                              - prod
+                              - beta
+          - Name: REGION
+            Value: !Ref AWS::Region
+          - Name: DB_TABLE
+            Value: !If 
+              - IsProdEnvironment
+              - terraform-state-lock-prod
+              - terraform-state-lock
+          - Name: TF_VAR
+            Value: !Sub '../tfvars-file/${Environment}.tfvars'
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: buildspec-apply.yaml
+
+  # CodePipeline Service Role
+  CodePipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Environment}-alr-pipeline-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: PipelinePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:GetBucketVersioning
+                Resource:
+                  - !Sub '${PipelineArtifactsBucket}/*'
+                  - !GetAtt PipelineArtifactsBucket.Arn
+              - Effect: Allow
+                Action:
+                  - codebuild:BatchGetBuilds
+                  - codebuild:StartBuild
+                Resource:
+                  - !GetAtt PlanCodeBuildProject.Arn
+                  - !GetAtt ApplyCodeBuildProject.Arn
+
+
+
+
+  # CodePipeline
+  InfraPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: !Sub '${Environment}-alr-infra-pipeline'
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactsBucket
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: SourceAction
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeStarSourceConnection
+                Version: '1'
+              Configuration:
+                ConnectionArn: !Ref GitHubConnectionArn
+                FullRepositoryId: !Ref GitHubRepo
+                BranchName: !Ref GitHubBranch
+                OutputArtifactFormat: CODE_ZIP
+              OutputArtifacts:
+                - Name: SourceOutput
+
+        - Name: Plan
+          Actions:
+            - Name: TerraformPlan
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref PlanCodeBuildProject
+              InputArtifacts:
+                - Name: SourceOutput
+              OutputArtifacts:
+                - Name: PlanOutput
+
+        - Name: Approval
+          Actions:
+            - Name: ManualApproval
+              ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: '1'
+              Configuration:
+                CustomData: !Sub 'Please review the Terraform plan for ${Environment} environment and approve to proceed with infrastructure deployment.'
+
+        - Name: Apply
+          Actions:
+            - Name: TerraformApply
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref ApplyCodeBuildProject
+              InputArtifacts:
+                - Name: SourceOutput
+
+# Conditions
+Conditions:
+  IsDevEnvironment: !Equals [!Ref Environment, usdev-usw2]
+  IsQAEnvironment: !Equals [!Ref Environment, usqa-usw2]
+  IsStgEnvironment: !Equals [!Ref Environment, usstg-usw2]
+  IsProdEnvironment: !Or 
+    - !Equals [!Ref Environment, usprod-usw2]
+    - !Equals [!Ref Environment, usbeta-usw2]
+
+Outputs:
+  PipelineName:
+    Description: Name of the created pipeline
+    Value: !Ref InfraPipeline
+
+  PipelineUrl:
+    Description: URL of the CodePipeline
+    Value: !Sub 'https://console.aws.amazon.com/codesuite/codepipeline/pipelines/${InfraPipeline}/view'
+
+  ArtifactsBucket:
+    Description: S3 bucket for pipeline artifacts
+    Value: !Ref PipelineArtifactsBucket

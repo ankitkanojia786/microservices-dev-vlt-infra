@@ -49,7 +49,7 @@ data "aws_vpc" "existing" {
 
 # Networking module: Subnets, Route Tables, NAT Gateway (in existing VPC)
 module "networking" {
-  source               = "./modules/networking"
+  source               = "../child-module/networking"
   region               = local.aws_region_full
   environment          = var.environment
   vpc_id               = aws_vpc.main.id
@@ -60,7 +60,7 @@ module "networking" {
 
 # Security module: Security groups, IAM roles
 module "security" {
-  source         = "./modules/security"
+  source         = "../child-module/security"
   environment    = var.environment
   vpc_id         = aws_vpc.main.id
   container_port = var.container_port
@@ -69,19 +69,19 @@ module "security" {
 
 # ALB module - Named as per requirement: <country+env>-<aws-region>-<project>-alb
 module "alb" {
-  source               = "./modules/alb"
+  source               = "../child-module/alb"
   environment          = var.environment
   country_environment  = local.country_env
   deployment_region    = local.aws_region_short
   vpc_id               = aws_vpc.main.id
-  public_subnet_ids    = module.networking.public_subnet_ids
+  public_subnet_ids    = values(module.networking.public_subnet_ids)
   alb_sg_id            = module.security.alb_sg_id
   tags                 = local.tags
 }
 
 # ECR module - Named as per requirement: <country+env>-<aws-region>-<project>-ecr
 module "ecr" {
-  source      = "./modules/ecr"
+  source      = "../child-module/ecr"
   environment = var.environment
   tags        = local.tags
 }
@@ -90,12 +90,10 @@ module "ecr" {
 resource "aws_apigatewayv2_vpc_link" "this" {
   name               = "${var.environment}-alr-vpc-link"
   security_group_ids = []
-  subnet_ids         = module.networking.private_subnet_ids
+  subnet_ids         = values(module.networking.private_subnet_ids)
   
   tags = local.tags
 }
-
-
 
 # ========================================
 # AWS PARAMETER STORE - FOR PIPELINE 2 (Using for expressions)
@@ -214,57 +212,3 @@ resource "aws_ssm_parameter" "vpc_link_id" {
   
   tags = local.tags
 }
-
-
-
-# ========================================
-# COMMENTED OUT - FOR FUTURE PIPELINE 2
-# ========================================
-
-# # Compute module: ECS Cluster
-# module "compute" {
-#   source             = "./modules/compute"
-#   environment        = var.environment
-#   vpc_id             = data.aws_vpc.existing.id
-#   private_subnet_ids = module.networking.private_subnet_ids
-#   tags               = local.tags
-# }
-
-# # ECS Service module: Task definition and ECS service
-# module "ecs_service" {
-#   source             = "./modules/ecs-service"
-#   environment        = var.environment
-#   cluster_name       = module.compute.ecs_cluster_name
-#   service_name       = "${var.environment}-alr-ecs-service"
-#   task_exec_role_arn = module.security.ecs_task_execution_role_arn
-#   ecs_sg_id          = module.security.ecs_sg_id
-#   subnet_ids         = module.networking.private_subnet_ids
-#   container_port     = var.container_port
-#   container_cpu      = var.container_cpu
-#   container_memory   = var.container_memory
-#   desired_count      = var.desired_count
-#   ecr_image          = "${module.ecr.ecr_repo_url}:latest"
-#   target_group_arn   = module.alb.target_group_arn
-#   tags               = local.tags
-# }
-
-# # API Gateway module
-# module "api_gateway" {
-#   source           = "./modules/api-gateway"
-#   environment      = var.environment
-#   vpc_id           = data.aws_vpc.existing.id
-#   alb_dns_name     = module.alb.alb_dns_name
-#   alb_listener_arn = module.alb.http_listener_arn
-#   subnet_ids       = module.networking.private_subnet_ids
-#   tags             = local.tags
-# }
-
-# # Monitoring module
-# module "monitoring" {
-#   source           = "./modules/monitoring"
-#   environment      = var.environment
-#   region           = var.aws_regions
-#   ecs_cluster_name = module.compute.ecs_cluster_name
-#   alert_emails     = var.alert_emails
-#   tags             = local.tags
-# }

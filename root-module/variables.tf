@@ -20,8 +20,6 @@ variable "region_mapping" {
   }
 }
 
-
-
 # Environment Configuration
 variable "environment" {
   description = "Environment name (e.g., usdev-usw2, usqa-usw2, eudev-euw1)"
@@ -33,8 +31,6 @@ variable "environment" {
     error_message = "Environment must follow pattern: <region><env>-<aws_region> (e.g., usdev-usw2, euqa-euw1). Flow: dev → qa → stg → prod → beta."
   }
 }
-
-
 
 # Project Configuration
 variable "project_name" {
@@ -111,8 +107,6 @@ variable "alert_emails" {
   type        = list(string)
   default     = []
 }
-
-
 
 # Terraform CI/CD variables
 variable "terraform_codestar_connection_arn" {
