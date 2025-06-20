@@ -1,0 +1,66 @@
+# Infrastructure Pipeline Configuration
+# Pipeline Name: usdev-usw2-alr-infra
+# Purpose: Provisions infrastructure components for ALR Subscription microservice
+
+pipeline:
+  name: "${environment}-alr-infra"
+  description: "Infrastructure provisioning pipeline for ALR Subscription microservice"
+  
+  # Pipeline Phases
+  phases:
+    - name: "Source"
+      description: "Pull Terraform code from GitHub"
+      source:
+        provider: "GitHub"
+        repository: "${terraform_repository_id}"
+        branch: "${terraform_branch_name}"
+        connection_arn: "${terraform_codestar_connection_arn}"
+    
+    - name: "Terraform Plan"
+      description: "Preview infrastructure changes"
+      actions:
+        - name: "TerraformPlan"
+          provider: "Terraform"
+          configuration:
+            command: "plan"
+            input_artifacts: ["SourceOutput"]
+            output_artifacts: ["PlanOutput"]
+    
+    - name: "Manual Approval"
+      description: "Manual approval for infrastructure changes"
+      actions:
+        - name: "ManualApproval"
+          provider: "Manual"
+          configuration:
+            custom_data: "Please review the Terraform plan and approve infrastructure changes"
+    
+    - name: "Terraform Apply"
+      description: "Provision infrastructure components"
+      actions:
+        - name: "TerraformApply"
+          provider: "Terraform"
+          configuration:
+            command: "apply"
+            input_artifacts: ["SourceOutput", "PlanOutput"]
+            output_artifacts: ["ApplyOutput"]
+
+  # Infrastructure Components Provisioned
+  components:
+    - "Subnets (in pre-existing VPC)"
+    - "Route Tables"
+    - "Security Groups"
+    - "NAT Gateway"
+    - "ECR Repository (${country_env}-${aws_region_short}-alr-ecr)"
+    - "ALB (${country_env}-${aws_region_short}-alr-alb)"
+    - "IAM Roles"
+    - "Parameter Store values for Application Pipeline"
+
+  # Execution Notes
+  execution:
+    trigger: "Manual - during initial infra setup"
+    re_run: "Only when infrastructure updates are required"
+    
+  # Environment Support
+  environments:
+    - "US environments (usdev-usw2, usqa-usw2, usprod-usw2)"
+    - "EU environments (eudev-euw1, euqa-euw1, euprod-euw1)"

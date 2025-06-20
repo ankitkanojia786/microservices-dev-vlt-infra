@@ -1,5 +1,5 @@
 provider "aws" {
-  region = var.aws_regions
+  region = var.region_mapping[split("-", var.environment)[1]]
 }
 
 # Required for ECS task execution role policy

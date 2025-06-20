@@ -8,9 +8,15 @@ variable "region" {
   type        = string
 }
 
-variable "vpc_cidr" {
-  description = "CIDR block for the VPC"
+variable "vpc_id" {
+  description = "ID of the existing VPC"
   type        = string
+}
+
+variable "vpc_cidr" {
+  description = "CIDR block for the VPC (optional when using existing VPC)"
+  type        = string
+  default     = ""
 }
 
 variable "public_subnet_cidrs" {

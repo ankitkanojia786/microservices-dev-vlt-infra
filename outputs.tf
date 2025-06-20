@@ -1,7 +1,7 @@
 # VPC and Networking Outputs
 output "vpc_id" {
-  description = "ID of the VPC"
-  value       = module.networking.vpc_id
+  description = "ID of the existing VPC"
+  value       = data.aws_vpc.existing.id
 }
 
 output "private_subnet_ids" {
@@ -55,4 +55,15 @@ output "ecr_repository_url" {
 output "ecr_repository_name" {
   description = "Name of the ECR repository"
   value       = module.ecr.ecr_repo_name
+}
+
+# Infrastructure Pipeline Specific Outputs
+output "alr_ecr_name" {
+  description = "ALR ECR repository name following naming convention"
+  value       = module.ecr.ecr_repo_name
+}
+
+output "alr_alb_name" {
+  description = "ALR ALB name following naming convention"
+  value       = module.alb.alb_dns_name
 }

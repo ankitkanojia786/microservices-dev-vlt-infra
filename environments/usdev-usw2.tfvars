@@ -1,7 +1,3 @@
-# Default configuration - Use environment-specific tfvars files for actual deployments
-# Example: terraform apply -var-file="environments/usdev-usw2.tfvars"
-
-# This file serves as a template and fallback for local development
 environment = "usdev-usw2"
 
 # Project Configuration

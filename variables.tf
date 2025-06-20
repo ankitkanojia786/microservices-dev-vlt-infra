@@ -5,30 +5,36 @@ variable "aws_regions" {
   default     = "us-west-2"
 }
 
-variable "aws_account_id" {
-  description = "AWS account ID"
-  type        = string
-  default     = "913524921936"
+# Region mapping for multi-region support
+variable "region_mapping" {
+  description = "Mapping of short region codes to full AWS region names"
+  type        = map(string)
+  default = {
+    "usw2" = "us-west-2"
+    "use1" = "us-east-1"
+    "euw1" = "eu-west-1"
+    "euc1" = "eu-central-1"
+    "aps1" = "ap-south-1"
+    "apse1" = "ap-southeast-1"
+    "cac1" = "ca-central-1"
+  }
 }
+
+
 
 # Environment Configuration
 variable "environment" {
-  description = "Environment name (e.g., usdev-usw2, usqa-usw2)"
+  description = "Environment name (e.g., usdev-usw2, usqa-usw2, eudev-euw1)"
   type        = string
   default     = "usdev-usw2"
+  
+  validation {
+    condition = can(regex("^(us|eu)(dev|qa|stg|prod|beta)-(usw2|use1|euw1|euc1|aps1|apse1|cac1)$", var.environment))
+    error_message = "Environment must follow pattern: <region><env>-<aws_region> (e.g., usdev-usw2, euqa-euw1). Flow: dev → qa → stg → prod → beta."
+  }
 }
 
-variable "country_environment" {
-  description = "Country environment identifier"
-  type        = string
-  default     = "usdev"
-}
 
-variable "deployment_region" {
-  description = "Deployment region identifier"
-  type        = string
-  default     = "usw2"
-}
 
 # Project Configuration
 variable "project_name" {
@@ -46,7 +52,7 @@ variable "application_name" {
 variable "module_name" {
   description = "Module name"
   type        = string
-  default     = "alr-subscription"
+  default     = "alr-be"
 }
 
 variable "service_name" {
@@ -106,12 +112,7 @@ variable "alert_emails" {
   default     = []
 }
 
-# Common tags (deprecated - now using variables above)
-variable "tags" {
-  description = "Common tags for all resources"
-  type        = map(string)
-  default     = {}
-}
+
 
 # Terraform CI/CD variables
 variable "terraform_codestar_connection_arn" {

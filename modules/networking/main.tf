@@ -1,24 +1,16 @@
-# Create VPC
-resource "aws_vpc" "this" {
-  cidr_block           = var.vpc_cidr
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-  
-  tags = merge(var.tags, {
-    Name = "${var.environment}-alr-subscription-microservice-vpc"
-  })
-}
+# Use existing VPC (passed as variable)
+# VPC is referenced via vpc_id variable
 
 # Create public subnets
 resource "aws_subnet" "public" {
   count                   = length(var.public_subnet_cidrs)
-  vpc_id                  = aws_vpc.this.id
+  vpc_id                  = var.vpc_id
   cidr_block              = var.public_subnet_cidrs[count.index]
   availability_zone       = data.aws_availability_zones.available.names[count.index]
   map_public_ip_on_launch = true
   
   tags = merge(var.tags, {
-    Name = "${var.environment}-alr-subscription-microservice-public-subnet-${count.index + 1}"
+    Name = "${var.environment}-alr-public-subnet-${count.index + 1}"
     "ohi:subnet-type" = "public"
   })
 }
@@ -26,12 +18,12 @@ resource "aws_subnet" "public" {
 # Create private subnets
 resource "aws_subnet" "private" {
   count             = length(var.private_subnet_cidrs)
-  vpc_id            = aws_vpc.this.id
+  vpc_id            = var.vpc_id
   cidr_block        = var.private_subnet_cidrs[count.index]
   availability_zone = data.aws_availability_zones.available.names[count.index]
   
   tags = merge(var.tags, {
-    Name = "${var.environment}-alr-subscription-microservice-private-subnet-${count.index + 1}"
+    Name = "${var.environment}-alr-private-subnet-${count.index + 1}"
     "ohi:subnet-type" = "private"
   })
 }
@@ -41,10 +33,10 @@ data "aws_availability_zones" "available" {}
 
 # Create Internet Gateway
 resource "aws_internet_gateway" "this" {
-  vpc_id = aws_vpc.this.id
+  vpc_id = var.vpc_id
   
   tags = merge(var.tags, {
-    Name = "${var.environment}-alr-subscription-microservice-igw"
+    Name = "${var.environment}-alr-igw"
   })
 }
 
@@ -53,7 +45,7 @@ resource "aws_eip" "nat" {
   domain = "vpc"
   
   tags = merge(var.tags, {
-    Name = "${var.environment}-alr-subscription-microservice-nat-eip"
+    Name = "${var.environment}-alr-nat-eip"
   })
 }
 
@@ -63,7 +55,7 @@ resource "aws_nat_gateway" "this" {
   subnet_id     = aws_subnet.public[0].id
   
   tags = merge(var.tags, {
-    Name = "${var.environment}-alr-subscription-microservice-nat-gateway"
+    Name = "${var.environment}-alr-nat-gateway"
   })
   
   depends_on = [aws_internet_gateway.this]
@@ -71,7 +63,7 @@ resource "aws_nat_gateway" "this" {
 
 # Create public route table
 resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.this.id
+  vpc_id = var.vpc_id
   
   route {
     cidr_block = "0.0.0.0/0"
@@ -79,13 +71,13 @@ resource "aws_route_table" "public" {
   }
   
   tags = merge(var.tags, {
-    Name = "${var.environment}-alr-subscription-microservice-public-rt"
+    Name = "${var.environment}-alr-public-rt"
   })
 }
 
 # Create private route table
 resource "aws_route_table" "private" {
-  vpc_id = aws_vpc.this.id
+  vpc_id = var.vpc_id
   
   route {
     cidr_block     = "0.0.0.0/0"
@@ -93,7 +85,7 @@ resource "aws_route_table" "private" {
   }
   
   tags = merge(var.tags, {
-    Name = "${var.environment}-alr-subscription-microservice-private-rt"
+    Name = "${var.environment}-alr-private-rt"
   })
 }
 

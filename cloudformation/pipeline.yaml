@@ -4,7 +4,7 @@ Description: 'CloudFormation template for ALR Subscription Microservice Terrafor
 Parameters:
   ProjectName:
     Type: String
-    Default: alr-subscription-microservice
+    Default: alr-infra
     Description: Project name used for resource naming
   
   Environment:
@@ -57,7 +57,7 @@ Resources:
   TerraformArtifactBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub '${Environment}-alr-subscription-microservice-tf-artifacts'
+      BucketName: !Sub '${Environment}-alr-infra-tf-artifacts'
       VersioningConfiguration:
         Status: Enabled
       Tags:
@@ -66,17 +66,17 @@ Resources:
         - Key: ohi:application
           Value: alr-mobile
         - Key: ohi:module
-          Value: alr-subscription
+          Value: alr-be
         - Key: ohi:environment
           Value: !Ref Environment
         - Key: ohi:stack-name
-          Value: !Sub '${Environment}-alr-subscription-microservice-tf-init-pipeline'
+          Value: !Sub '${Environment}-alr-infra-pipeline-stack'
 
   # IAM role for CodePipeline
   CodePipelineServiceRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub '${Environment}-alr-subscription-microservice-pipeline-role'
+      RoleName: !Sub '${Environment}-alr-infra-pipeline-role'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -93,17 +93,17 @@ Resources:
         - Key: ohi:application
           Value: alr-mobile
         - Key: ohi:module
-          Value: alr-subscription
+          Value: alr-be
         - Key: ohi:environment
           Value: !Ref Environment
         - Key: ohi:stack-name
-          Value: !Sub '${Environment}-alr-subscription-microservice-tf-init-pipeline'
+          Value: !Sub '${Environment}-alr-infra-pipeline-stack'
 
   # IAM role for CodeBuild
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub '${Environment}-alr-subscription-microservice-build-role'
+      RoleName: !Sub '${Environment}-alr-infra-build-role'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -154,17 +154,17 @@ Resources:
         - Key: ohi:application
           Value: alr-mobile
         - Key: ohi:module
-          Value: alr-subscription
+          Value: alr-be
         - Key: ohi:environment
           Value: !Ref Environment
         - Key: ohi:stack-name
-          Value: !Sub '${Environment}-alr-subscription-microservice-tf-init-pipeline'
+          Value: !Sub '${Environment}-alr-infra-pipeline-stack'
 
   # CodeBuild project for Terraform
   TerraformCodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub '${Environment}-alr-subscription-microservice-tf-build'
+      Name: !Sub '${Environment}-alr-infra-tf-build'
       Description: 'CodeBuild project for ALR Subscription Microservice Terraform infrastructure'
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
       Artifacts:
@@ -188,11 +188,11 @@ Resources:
         - Key: ohi:application
           Value: alr-mobile
         - Key: ohi:module
-          Value: alr-subscription
+          Value: alr-be
         - Key: ohi:environment
           Value: !Ref Environment
         - Key: ohi:stack-name
-          Value: !Sub '${Environment}-alr-subscription-microservice-tf-init-pipeline'
+          Value: !Sub '${Environment}-alr-infra-pipeline-stack'
 
   # GitHub connection for CodeStar
   GitHubConnection:
@@ -206,17 +206,17 @@ Resources:
         - Key: ohi:application
           Value: alr-mobile
         - Key: ohi:module
-          Value: alr-subscription
+          Value: alr-be
         - Key: ohi:environment
           Value: !Ref Environment
         - Key: ohi:stack-name
-          Value: !Sub '${Environment}-alr-subscription-microservice-tf-init-pipeline'
+          Value: !Sub '${Environment}-alr-infra-pipeline-stack'
 
   # CodePipeline for Terraform
   TerraformPipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      Name: !Sub '${Environment}-alr-subscription-microservice-pipeline'
+      Name: !Sub '${Environment}-alr-infra'
       RoleArn: !GetAtt CodePipelineServiceRole.Arn
       ArtifactStore:
         Type: S3
@@ -253,7 +253,7 @@ Resources:
                 - Name: TerraformPlan
         - Name: Approve
           Actions:
-            - Name: Approval
+            - Name: ManualApproval
               ActionTypeId:
                 Category: Approval
                 Owner: AWS
@@ -278,11 +278,11 @@ Resources:
         - Key: ohi:application
           Value: alr-mobile
         - Key: ohi:module
-          Value: alr-subscription
+          Value: alr-be
         - Key: ohi:environment
           Value: !Ref Environment
         - Key: ohi:stack-name
-          Value: !Sub '${Environment}-alr-subscription-microservice-tf-init-pipeline'
+          Value: !Sub '${Environment}-alr-infra-pipeline-stack'
 
 Outputs:
   TerraformPipelineName:

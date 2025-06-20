@@ -6,13 +6,9 @@ resource "aws_ecr_repository" "this" {
     scan_on_push = true
   }
   
-  tags = {
-    "ohi:project"     = "alr"
-    "ohi:application" = "alr-mobile"
-    "ohi:module"      = "alr-subscription"
-    "ohi:environment" = var.environment
-    "ohi:stack-name"  = "${var.environment}-alr-subscription-microservice-tf-init-pipeline"
-  }
+  tags = merge(var.tags, {
+    Name = "${var.environment}-alr-ecr"
+  })
 }
 
 resource "aws_ecr_lifecycle_policy" "this" {
