@@ -10,28 +10,17 @@ phases:
       - unzip terraform_1.11.2_linux_amd64.zip
       - sudo mv terraform /usr/local/bin/
       - terraform --version
-      - echo "Current directory contents:"
-      - ls -la
-      - echo "Checking tfvars file:"
-      - ls -la tfvars-file/ || echo "tfvars-file directory not found"
 
   pre_build:
     commands:
       - cd root-module
-      - echo "Current directory: $(pwd)"
-      - echo "Directory contents:"
-      - ls -la
-      - echo "Initializing Terraform..."
       - terraform init -backend-config="bucket=${STATE_FILE_BUCKET}" -backend-config="key=${STATE_FILE_PATH}" -backend-config="region=${REGION}" -backend-config="encrypt=true" -backend-config="dynamodb_table=${DB_TABLE}"
       - terraform validate
 
   build:
     commands:
-      - echo "Planning Terraform deployment..."
-      - echo "Using tfvars file: ${TF_VAR}"
       - terraform plan -var-file="../${TF_VAR}" -out=tfplan
 
 artifacts:
   files:
     - root-module/tfplan
-  name: terraform-plan-artifacts

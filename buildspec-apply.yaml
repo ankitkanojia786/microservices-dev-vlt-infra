@@ -14,17 +14,9 @@ phases:
   pre_build:
     commands:
       - cd root-module
-      - echo "Current directory: $(pwd)"
-      - echo "Initializing Terraform..."
       - terraform init -backend-config="bucket=${STATE_FILE_BUCKET}" -backend-config="key=${STATE_FILE_PATH}" -backend-config="region=${REGION}" -backend-config="encrypt=true" -backend-config="dynamodb_table=${DB_TABLE}"
       - terraform validate
 
   build:
     commands:
-      - echo "Terraform deployment..."
-      - echo "Using tfvars file: ${TF_VAR}"
       - terraform apply -var-file="../${TF_VAR}" -auto-approve
-
-  post_build:
-    commands:
-      - echo "Infrastructure deployment completed"
