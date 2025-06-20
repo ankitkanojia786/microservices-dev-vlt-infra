@@ -14,7 +14,6 @@ phases:
       - terraform init -backend-config="bucket=${STATE_FILE_BUCKET}" -backend-config="key=${STATE_FILE_PATH}" -backend-config="region=${REGION}" -backend-config="encrypt=true" -backend-config="dynamodb_table=${DB_TABLE}"
   build:
     commands:
-      - chmod +x ../scripts/find-tfvars.sh
-      - TFVARS_FILE=$(../scripts/find-tfvars.sh)
-      - echo "Using tfvars file $TFVARS_FILE"
-      - terraform apply -var-file="$TFVARS_FILE" -auto-approve
+      - TFVARS_PATH=$(find .. -name "*.tfvars" | head -1)
+      - echo "Using tfvars file $TFVARS_PATH"
+      - terraform apply -var-file="$TFVARS_PATH" -auto-approve
