@@ -14,6 +14,15 @@ phases:
       - terraform init -backend-config="bucket=${STATE_FILE_BUCKET}" -backend-config="key=${STATE_FILE_PATH}" -backend-config="region=${REGION}" -backend-config="encrypt=true" -backend-config="dynamodb_table=${DB_TABLE}"
   build:
     commands:
-      - TFVARS_PATH=$(find .. -name "*.tfvars" | head -1)
-      - echo "Using tfvars file $TFVARS_PATH"
-      - terraform apply -var-file="$TFVARS_PATH" -auto-approve
+      - echo 'environment = "usdev-usw2"' > ../usdev-usw2.tfvars
+      - echo 'project_name = "alr"' >> ../usdev-usw2.tfvars
+      - echo 'application_name = "alr-mobile"' >> ../usdev-usw2.tfvars
+      - echo 'module_name = "alr-be"' >> ../usdev-usw2.tfvars
+      - echo 'vpc_cidr = "10.0.0.0/16"' >> ../usdev-usw2.tfvars
+      - echo 'public_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]' >> ../usdev-usw2.tfvars
+      - echo 'private_subnet_cidrs = ["10.0.3.0/24", "10.0.4.0/24"]' >> ../usdev-usw2.tfvars
+      - echo 'container_port = 80' >> ../usdev-usw2.tfvars
+      - echo 'container_cpu = 256' >> ../usdev-usw2.tfvars
+      - echo 'container_memory = 512' >> ../usdev-usw2.tfvars
+      - echo 'desired_count = 1' >> ../usdev-usw2.tfvars
+      - terraform apply -var-file="../usdev-usw2.tfvars" -auto-approve
