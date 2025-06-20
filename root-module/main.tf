@@ -23,7 +23,7 @@ locals {
     alb_dns_name                = module.alb.alb_dns_name
     target_group_arn            = module.alb.target_group_arn
     ecs_security_group_id       = module.security.ecs_sg_id
-    ecs_task_execution_role_arn = module.security.ecs_task_execution_role_arn
+    # ecs_task_execution_role_arn removed - not needed for infrastructure-only deployment
     ecr_repository_url          = module.ecr.ecr_repo_url
     ecr_repository_arn          = module.ecr.ecr_repo_arn
     ecr_repository_name         = module.ecr.ecr_repo_name
@@ -170,14 +170,7 @@ resource "aws_ssm_parameter" "ecs_security_group_id" {
   tags = local.tags
 }
 
-# Store IAM Role ARN
-resource "aws_ssm_parameter" "ecs_task_execution_role_arn" {
-  name  = "/${var.environment}/${var.module_name}/ecs-task-execution-role-arn"
-  type  = "String"
-  value = local.parameter_store_values.ecs_task_execution_role_arn
-  
-  tags = local.tags
-}
+# ECS task execution role parameter removed - not needed for infrastructure-only deployment
 
 # Store ECR details
 resource "aws_ssm_parameter" "ecr_repository_url" {

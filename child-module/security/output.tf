@@ -6,6 +6,4 @@ output "ecs_sg_id" {
   value = aws_security_group.ecs.id
 }
 
-output "ecs_task_execution_role_arn" {
-  value = aws_iam_role.ecs_task_execution_role.arn
-}
+# ECS task execution role removed - not needed for infrastructure-only deployment
