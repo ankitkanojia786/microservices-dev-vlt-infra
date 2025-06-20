@@ -25,7 +25,7 @@ Parameters:
 
   GitHubConnectionArn:
     Type: String
-    Default: arn:aws:codeconnections:us-west-2:913524921936:connection/e969f690-6a17-4e87-ba3c-6ee96cdf88ff
+    Default: arn:aws:codeconnections:us-west-2:913524921936:connection/6d7fd6e4-f0b4-4fa4-a872-6ee5122c8a09
     Description: GitHub CodeStar connection ARN
 
 
@@ -204,7 +204,11 @@ Resources:
               - Effect: Allow
                 Action:
                   - codeconnections:UseConnection
-                Resource: !Ref GitHubConnectionArn
+                  - codestar-connections:UseConnection
+                Resource: 
+                  - !Ref GitHubConnectionArn
+                  - !Sub 'arn:aws:codeconnections:${AWS::Region}:${AWS::AccountId}:connection/*'
+                  - !Sub 'arn:aws:codestar-connections:${AWS::Region}:${AWS::AccountId}:connection/*'
 
 
 
