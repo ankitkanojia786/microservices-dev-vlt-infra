@@ -1,5 +1,4 @@
 version: 0.2
-
 phases:
   install:
     runtime-versions:
@@ -9,15 +8,10 @@ phases:
       - unzip terraform_1.11.2_linux_amd64.zip
       - sudo mv terraform /usr/local/bin/
       - terraform --version
-
   pre_build:
     commands:
       - cd root-module
       - terraform init -backend-config="bucket=${STATE_FILE_BUCKET}" -backend-config="key=${STATE_FILE_PATH}" -backend-config="region=${REGION}" -backend-config="encrypt=true" -backend-config="dynamodb_table=${DB_TABLE}"
-
   build:
     commands:
-      - echo "Finding tfvars file dynamically"
-      - TFVARS_FILE=$(find .. -name "usdev-usw2.tfvars" -type f | head -1)
-      - echo "Found tfvars file: $TFVARS_FILE"
-      - terraform apply -var-file="$TFVARS_FILE" -auto-approve
+      - terraform apply -var-file="../tfvars-file/usdev-usw2.tfvars" -auto-approve
