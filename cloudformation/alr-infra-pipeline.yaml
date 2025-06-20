@@ -73,7 +73,7 @@ Resources:
                 Action:
                   - s3:GetObject
                   - s3:PutObject
-                Resource: !Sub '${PipelineArtifactsBucket}/*'
+                Resource: !Sub '${PipelineArtifactsBucket.Arn}/*'
 
   # CodeBuild Project for Plan
   PlanCodeBuildProject:
@@ -192,7 +192,7 @@ Resources:
                   - s3:PutObject
                   - s3:GetBucketVersioning
                 Resource:
-                  - !Sub '${PipelineArtifactsBucket}/*'
+                  - !Sub '${PipelineArtifactsBucket.Arn}/*'
                   - !GetAtt PipelineArtifactsBucket.Arn
               - Effect: Allow
                 Action:
