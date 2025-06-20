@@ -23,9 +23,11 @@ phases:
 
   build:
     commands:
-      - echo "Looking for tfvars file"
-      - ls -la ../tfvars-file/
-      - terraform plan -var-file="../tfvars-file/usdev-usw2.tfvars" -out=tfplan
+      - echo "Finding tfvars file dynamically"
+      - TFVARS_FILE=$(find .. -name "usdev-usw2.tfvars" -type f | head -1)
+      - echo "Found tfvars file: $TFVARS_FILE"
+      - test -f "$TFVARS_FILE" && echo "File exists" || echo "File not found"
+      - terraform plan -var-file="$TFVARS_FILE" -out=tfplan
 
 artifacts:
   files:
