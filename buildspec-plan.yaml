@@ -5,23 +5,33 @@ phases:
     runtime-versions:
       python: latest
     commands:
-      - cd root-module
-      - echo "Installing Terraform on Ubuntu..."
+      - echo "Installing Terraform..."
       - wget https://releases.hashicorp.com/terraform/1.11.2/terraform_1.11.2_linux_amd64.zip
       - unzip terraform_1.11.2_linux_amd64.zip
       - sudo mv terraform /usr/local/bin/
       - terraform --version
+      - echo "Current directory contents:"
+      - ls -la
+      - echo "Checking tfvars file:"
+      - ls -la tfvars-file/ || echo "tfvars-file directory not found"
 
   pre_build:
     commands:
+      - cd root-module
+      - echo "Current directory: $(pwd)"
+      - echo "Directory contents:"
+      - ls -la
       - echo "Initializing Terraform..."
       - terraform init -backend-config="bucket=${STATE_FILE_BUCKET}" -backend-config="key=${STATE_FILE_PATH}" -backend-config="region=${REGION}" -backend-config="encrypt=true" -backend-config="dynamodb_table=${DB_TABLE}"
+      - terraform validate
 
   build:
     commands:
       - echo "Planning Terraform deployment..."
-      - terraform plan --var-file="${TF_VAR}"
+      - echo "Using tfvars file: ${TF_VAR}"
+      - terraform plan -var-file="../${TF_VAR}" -out=tfplan
 
 artifacts:
   files:
-    - tfplan
+    - root-module/tfplan
+  name: terraform-plan-artifacts
