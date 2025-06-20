@@ -12,6 +12,10 @@ phases:
 
   pre_build:
     commands:
+      - echo "Environment variables:"
+      - echo "ENVIRONMENT=${ENVIRONMENT}"
+      - echo "STATE_FILE_BUCKET=${STATE_FILE_BUCKET}"
+      - echo "STATE_FILE_PATH=${STATE_FILE_PATH}"
       - ls -la
       - find . -name "*.tfvars"
       - cd root-module
@@ -19,7 +23,9 @@ phases:
 
   build:
     commands:
-      - terraform plan -var-file="../tfvars-file/${ENVIRONMENT}.tfvars" -out=tfplan
+      - echo "Looking for tfvars file"
+      - ls -la ../tfvars-file/
+      - terraform plan -var-file="../tfvars-file/usdev-usw2.tfvars" -out=tfplan
 
 artifacts:
   files:

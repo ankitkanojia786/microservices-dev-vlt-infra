@@ -17,4 +17,4 @@ phases:
 
   build:
     commands:
-      - terraform apply -var-file="../tfvars-file/${ENVIRONMENT}.tfvars" -auto-approve
+      - terraform apply -var-file="../tfvars-file/usdev-usw2.tfvars" -auto-approve
