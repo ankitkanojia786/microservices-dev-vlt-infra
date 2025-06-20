@@ -44,19 +44,6 @@ Resources:
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
 
-  # DynamoDB Table for Terraform State Locking
-  TerraformStateLockTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: terraform-state-lock
-      AttributeDefinitions:
-        - AttributeName: LockID
-          AttributeType: S
-      KeySchema:
-        - AttributeName: LockID
-          KeyType: HASH
-      BillingMode: PAY_PER_REQUEST
-
   # S3 Bucket for Pipeline Artifacts
   PipelineArtifactsBucket:
     Type: AWS::S3::Bucket
@@ -113,7 +100,7 @@ Resources:
                   - dynamodb:GetItem
                   - dynamodb:PutItem
                   - dynamodb:DeleteItem
-                Resource: !GetAtt TerraformStateLockTable.Arn
+                Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/terraform-state-lock'
 
   # CodeBuild Project for Plan
   PlanCodeBuildProject:
