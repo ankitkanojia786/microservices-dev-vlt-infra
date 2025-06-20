@@ -5,7 +5,6 @@ phases:
     runtime-versions:
       python: latest
     commands:
-      - echo "Installing Terraform"
       - wget https://releases.hashicorp.com/terraform/1.11.2/terraform_1.11.2_linux_amd64.zip
       - unzip terraform_1.11.2_linux_amd64.zip
       - sudo mv terraform /usr/local/bin/
@@ -13,19 +12,14 @@ phases:
 
   pre_build:
     commands:
-      - echo "Repository contents:"
       - ls -la
-      - echo "Looking for tfvars files:"
-      - find . -name "*.tfvars" -type f
+      - find . -name "*.tfvars"
       - cd root-module
       - terraform init -backend-config="bucket=${STATE_FILE_BUCKET}" -backend-config="key=${STATE_FILE_PATH}" -backend-config="region=${REGION}" -backend-config="encrypt=true" -backend-config="dynamodb_table=${DB_TABLE}"
 
   build:
     commands:
-      - echo "Finding tfvars file for environment"
-      - TFVARS_FILE=$(find .. -name "*usdev-usw2.tfvars" -type f | head -1)
-      - echo "Using tfvars file: $TFVARS_FILE"
-      - terraform plan -var-file="$TFVARS_FILE" -out=tfplan
+      - terraform plan -var-file="../tfvars-file/${ENVIRONMENT}.tfvars" -out=tfplan
 
 artifacts:
   files:

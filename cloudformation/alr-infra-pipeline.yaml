@@ -118,6 +118,8 @@ Resources:
               - terraform-state-lock
           - Name: TF_VAR
             Value: !Sub 'tfvars-file/${Environment}.tfvars'
+          - Name: ENVIRONMENT
+            Value: !Ref Environment
       Source:
         Type: CODEPIPELINE
         BuildSpec: buildspec-plan.yaml
@@ -165,6 +167,8 @@ Resources:
               - terraform-state-lock
           - Name: TF_VAR
             Value: !Sub 'tfvars-file/${Environment}.tfvars'
+          - Name: ENVIRONMENT
+            Value: !Ref Environment
       Source:
         Type: CODEPIPELINE
         BuildSpec: buildspec-apply.yaml
