@@ -16,6 +16,17 @@ phases:
 
   pre_build:
     commands:
+      - |
+        if [ -z "$ENVIRONMENT" ]; then
+          case "$CODEBUILD_WEBHOOK_HEAD_REF" in
+            "refs/heads/develop") export ENVIRONMENT="usdev-usw2" ;;
+            "refs/heads/main") export ENVIRONMENT="usqa-usw2" ;;
+            "refs/heads/release") export ENVIRONMENT="usprod-usw2" ;;
+            *) export ENVIRONMENT="usdev-usw2" ;;
+          esac
+        fi
+      - echo "=== ALR Infrastructure Pipeline ($ENVIRONMENT-alr-infra) ==="
+      - echo "Deploying to environment: $ENVIRONMENT"
       - terraform init -backend-config="backend-configs/$ENVIRONMENT.hcl" -reconfigure
       - terraform validate
 
@@ -33,7 +44,9 @@ phases:
 
   post_build:
     commands:
-      - echo "Terraform $TF_COMMAND completed"
+      - echo "=== ALR Infrastructure Pipeline Completed ==="
+      - echo "Pipeline: $ENVIRONMENT-alr-infra"
+      - echo "Terraform $TF_COMMAND completed successfully"
 
 artifacts:
   files:

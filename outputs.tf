@@ -67,3 +67,19 @@ output "alr_alb_name" {
   description = "ALR ALB name following naming convention"
   value       = module.alb.alb_dns_name
 }
+
+# Loop-compatible outputs for developers
+output "public_subnet_ids_map" {
+  description = "Public subnet IDs in map format for loops"
+  value       = module.networking.public_subnet_ids
+}
+
+output "private_subnet_ids_map" {
+  description = "Private subnet IDs in map format for loops"
+  value       = module.networking.private_subnet_ids
+}
+
+output "vpc_link_id" {
+  description = "VPC Link ID for API Gateway"
+  value       = aws_apigatewayv2_vpc_link.this.id
+}

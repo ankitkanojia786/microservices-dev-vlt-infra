@@ -27,6 +27,7 @@ locals {
     ecr_repository_url          = module.ecr.ecr_repo_url
     ecr_repository_arn          = module.ecr.ecr_repo_arn
     ecr_repository_name         = module.ecr.ecr_repo_name
+    vpc_link_id                 = aws_apigatewayv2_vpc_link.this.id
   }
 }
 
@@ -83,6 +84,15 @@ module "ecr" {
   source      = "./modules/ecr"
   environment = var.environment
   tags        = local.tags
+}
+
+# VPC Link for API Gateway
+resource "aws_apigatewayv2_vpc_link" "this" {
+  name               = "${var.environment}-alr-vpc-link"
+  security_group_ids = []
+  subnet_ids         = module.networking.private_subnet_ids
+  
+  tags = local.tags
 }
 
 
@@ -192,6 +202,15 @@ resource "aws_ssm_parameter" "ecr_repository_name" {
   name  = "/${var.environment}/${var.module_name}/ecr-repository-name"
   type  = "String"
   value = local.parameter_store_values.ecr_repository_name
+  
+  tags = local.tags
+}
+
+# Store VPC Link ID
+resource "aws_ssm_parameter" "vpc_link_id" {
+  name  = "/${var.environment}/${var.module_name}/vpc-link-id"
+  type  = "String"
+  value = local.parameter_store_values.vpc_link_id
   
   tags = local.tags
 }

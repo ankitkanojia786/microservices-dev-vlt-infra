@@ -1,0 +1,20 @@
+{
+  "environments": {
+    "develop": {
+      "environment": "usdev-usw2",
+      "auto_deploy": true,
+      "approval_required": false
+    },
+    "main": {
+      "environment": "usqa-usw2", 
+      "auto_deploy": false,
+      "approval_required": true
+    },
+    "release": {
+      "environment": "usprod-usw2",
+      "auto_deploy": false,
+      "approval_required": true
+    }
+  },
+  "default_action": "plan"
+}
