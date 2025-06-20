@@ -29,4 +29,7 @@ phases:
       - echo 'container_cpu = 256' >> ../usdev-usw2.tfvars
       - echo 'container_memory = 512' >> ../usdev-usw2.tfvars
       - echo 'desired_count = 1' >> ../usdev-usw2.tfvars
+      - echo 'terraform_codestar_connection_arn = "arn:aws:codeconnections:us-west-2:913524921936:connection/6d7fd6e4-f0b4-4fa4-a872-6ee5122c8a09"' >> ../usdev-usw2.tfvars
+      - echo 'terraform_repository_id = "ankitkanojia786/microservices-dev-vlt-infra"' >> ../usdev-usw2.tfvars
+      - echo 'terraform_branch_name = "main"' >> ../usdev-usw2.tfvars
       - terraform apply -var-file="../usdev-usw2.tfvars" -auto-approve
