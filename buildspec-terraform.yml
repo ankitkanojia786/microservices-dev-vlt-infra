@@ -1,5 +1,3 @@
-# ALR Subscription Microservice - Infrastructure Pipeline Buildspec
-# Pipeline: ${ENVIRONMENT}-alr-infra
 version: 0.2
 
 env:
@@ -12,43 +10,29 @@ phases:
     runtime-versions:
       python: 3.9
     commands:
-      - echo "=== ALR Infrastructure Pipeline - Installing Dependencies ==="
-      - echo "Installing Terraform $TF_VERSION..."
+      - echo "Installing Terraform $TF_VERSION"
       - curl -s -qL -o terraform_install.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
       - unzip terraform_install.zip
       - mv terraform /usr/bin/
       - terraform --version
-      - echo "Terraform installation completed"
       
   pre_build:
     commands:
-      - echo "=== ALR Infrastructure Pipeline - Pre-build Phase ==="
-      - cd $CODEBUILD_SRC_DIR
       - echo "Environment: $ENVIRONMENT"
       - echo "TF Command: $TF_COMMAND"
-      - echo "Initializing Terraform..."
       - terraform init -backend-config="backend-configs/$ENVIRONMENT.hcl" -reconfigure
-      - echo "Validating Terraform configuration..."
       - terraform validate
-      - echo "Terraform validation completed"
       
   build:
     commands:
-      - echo "=== ALR Infrastructure Pipeline - Build Phase ==="
-      - echo "Running Terraform $TF_COMMAND for ALR Subscription infrastructure..."
+      - echo "Running Terraform $TF_COMMAND"
       - |
         if [ "$TF_COMMAND" = "plan" ]; then
-          echo "Creating Terraform plan..."
           terraform plan -var-file="environments/$ENVIRONMENT.tfvars" -out=tfplan
-          echo "Terraform plan created successfully"
         elif [ "$TF_COMMAND" = "apply" ]; then
-          echo "Applying Terraform configuration..."
           terraform apply -var-file="environments/$ENVIRONMENT.tfvars" -auto-approve
-          echo "Infrastructure provisioning completed"
         elif [ "$TF_COMMAND" = "destroy" ]; then
-          echo "Destroying Terraform infrastructure..."
           terraform destroy -var-file="environments/$ENVIRONMENT.tfvars" -auto-approve
-          echo "Infrastructure destruction completed"
         else
           echo "Unknown TF_COMMAND: $TF_COMMAND"
           exit 1
@@ -56,20 +40,10 @@ phases:
       
   post_build:
     commands:
-      - echo "=== ALR Infrastructure Pipeline - Post-build Phase ==="
-      - echo "Terraform $TF_COMMAND completed successfully on $(date)"
-      - echo "Infrastructure components provisioned:"
-      - echo "  - Subnets and Route Tables"
-      - echo "  - Security Groups"
-      - echo "  - NAT Gateway"
-      - echo "  - ECR Repository"
-      - echo "  - Application Load Balancer"
-      - echo "  - IAM Roles"
-      - echo "  - Parameter Store values for Application Pipeline"
+      - echo "Terraform $TF_COMMAND completed on $(date)"
 
 artifacts:
   files:
     - tfplan
     - '**/*'
   name: alr-infra-pipeline-artifacts
-  discard-paths: no
