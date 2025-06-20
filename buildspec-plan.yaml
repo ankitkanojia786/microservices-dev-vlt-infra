@@ -13,14 +13,24 @@ phases:
 
   pre_build:
     commands:
+      - echo "Root directory contents:"
+      - ls -la
+      - echo "Checking tfvars-file directory:"
+      - ls -la tfvars-file/
       - cd root-module
+      - echo "Current directory after cd: $(pwd)"
+      - echo "Parent directory contents:"
+      - ls -la ../
+      - echo "Tfvars file path: ../${TF_VAR}"
+      - ls -la "../${TF_VAR}" || echo "File not found"
       - terraform init -backend-config="bucket=${STATE_FILE_BUCKET}" -backend-config="key=${STATE_FILE_PATH}" -backend-config="region=${REGION}" -backend-config="encrypt=true" -backend-config="dynamodb_table=${DB_TABLE}"
       - terraform validate
 
   build:
     commands:
-      - terraform plan -var-file="../${TF_VAR}" -out=tfplan
+      - terraform plan -var-file="../${TF_VAR}" -out=tfplan || terraform plan -var-file="../tfvars-file/usdev-usw2.tfvars" -out=tfplan
 
 artifacts:
   files:
-    - root-module/tfplan
+    - "**/*"
+  name: terraform-plan-output
