@@ -1,5 +1,5 @@
 resource "aws_ecs_cluster" "this" {
-  name = "${var.environment}-vlt-subscription-microservice-ecs-cluster"
+  name = "${var.environment}-alr-ecs-cluster"
   
   setting {
     name  = "containerInsights"
@@ -7,9 +7,10 @@ resource "aws_ecs_cluster" "this" {
   }
   
   tags = {
-    "ohi:project"     = "vlt"
-    "ohi:application" = "vlt-mobile"
-    "ohi:module"      = "vlt-subscription"
+    "ohi:project"     = "alr"
+    "ohi:application" = "alr-mobile"
+    "ohi:module"      = "alr-subscription"
     "ohi:environment" = var.environment
+    "ohi:stack-name"  = "${var.environment}-alr-subscription-microservice-tf-init-pipeline"
   }
 }

@@ -1,5 +1,5 @@
 resource "aws_ecs_task_definition" "this" {
-  family                   = "${var.environment}-vlt-subscription-microservice-ecs-task-definitions"
+  family                   = "${var.environment}-alr-ecs-task-definitions"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = var.container_cpu
@@ -8,7 +8,7 @@ resource "aws_ecs_task_definition" "this" {
   
   container_definitions = jsonencode([
     {
-      name      = "subscription-service"
+      name      = "alr-subscription-service"
       image     = var.ecr_image
       essential = true
       
@@ -23,7 +23,7 @@ resource "aws_ecs_task_definition" "this" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          "awslogs-group"         = "/ecs/${var.environment}-vlt-subscription-microservice"
+          "awslogs-group"         = "/ecs/${var.environment}-alr-subscription"
           "awslogs-region"        = data.aws_region.current.name
           "awslogs-stream-prefix" = "ecs"
         }
@@ -32,27 +32,29 @@ resource "aws_ecs_task_definition" "this" {
   ])
   
   tags = {
-    "ohi:project"     = "vlt"
-    "ohi:application" = "vlt-mobile"
-    "ohi:module"      = "vlt-subscription"
+    "ohi:project"     = "alr"
+    "ohi:application" = "alr-mobile"
+    "ohi:module"      = "alr-subscription"
     "ohi:environment" = var.environment
+    "ohi:stack-name"  = "${var.environment}-alr-subscription-microservice-tf-init-pipeline"
   }
 }
 
 resource "aws_cloudwatch_log_group" "this" {
-  name              = "/ecs/${var.environment}-vlt-subscription-microservice"
+  name              = "/ecs/${var.environment}-alr-subscription"
   retention_in_days = 30
   
   tags = {
-    "ohi:project"     = "vlt"
-    "ohi:application" = "vlt-mobile"
-    "ohi:module"      = "vlt-subscription"
+    "ohi:project"     = "alr"
+    "ohi:application" = "alr-mobile"
+    "ohi:module"      = "alr-subscription"
     "ohi:environment" = var.environment
+    "ohi:stack-name"  = "${var.environment}-alr-subscription-microservice-tf-init-pipeline"
   }
 }
 
 resource "aws_ecs_service" "this" {
-  name            = "${var.environment}-vlt-subscription-microservice-ecs-service"
+  name            = "${var.environment}-alr-ecs-service"
   cluster         = var.cluster_name
   task_definition = aws_ecs_task_definition.this.arn
   desired_count   = var.desired_count
@@ -66,14 +68,15 @@ resource "aws_ecs_service" "this" {
   
   load_balancer {
     target_group_arn = var.target_group_arn
-    container_name   = "subscription-service"
+    container_name   = "alr-subscription-service"
     container_port   = var.container_port
   }
   
   tags = {
-    "ohi:project"     = "vlt"
-    "ohi:application" = "vlt-mobile"
-    "ohi:module"      = "vlt-subscription"
+    "ohi:project"     = "alr"
+    "ohi:application" = "alr-mobile"
+    "ohi:module"      = "alr-subscription"
     "ohi:environment" = var.environment
+    "ohi:stack-name"  = "${var.environment}-alr-subscription-microservice-tf-init-pipeline"
   }
 }

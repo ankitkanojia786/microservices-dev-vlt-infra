@@ -1,5 +1,5 @@
 resource "aws_ecr_repository" "this" {
-  name                 = "${var.environment}-alr-subscription-microservice-ecr"
+  name                 = "${var.environment}-alr-ecr"
   image_tag_mutability = "MUTABLE"
   
   image_scanning_configuration {

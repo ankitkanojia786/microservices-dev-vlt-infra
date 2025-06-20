@@ -8,6 +8,22 @@ locals {
     "ohi:environment" = var.environment
     "ohi:stack-name"  = "${var.environment}-${var.service_name}-tf-init-pipeline"
   }
+
+  # Parameter Store values for Pipeline 2 using for expressions
+  parameter_store_values = {
+    vpc_id                    = module.networking.vpc_id
+    public_subnet_ids         = { for k, v in module.networking.public_subnet_ids : k => v }
+    private_subnet_ids        = { for k, v in module.networking.private_subnet_ids : k => v }
+    alb_arn                   = module.alb.alb_arn
+    alb_dns_name              = module.alb.alb_dns_name
+    target_group_arn          = module.alb.target_group_arn
+    ecs_security_group_id     = module.security.ecs_sg_id
+    ecs_task_execution_role_arn = module.security.ecs_task_execution_role_arn
+    ecr_repository_url        = module.ecr.ecr_repo_url
+    ecr_repository_arn        = module.ecr.ecr_repo_arn
+    ecr_repository_name       = module.ecr.ecr_repo_name
+    vpc_link_id               = aws_apigatewayv2_vpc_link.this.id
+  }
 }
 
 # Networking module: VPC, Subnets, Route Tables, NAT Gateway
@@ -46,96 +62,129 @@ module "ecr" {
   environment = var.environment
 }
 
+# VPC Link for API Gateway
+resource "aws_apigatewayv2_vpc_link" "this" {
+  name               = "${var.environment}-alr-subscription-vpc-link"
+  security_group_ids = []
+  subnet_ids         = module.networking.private_subnet_ids
+  
+  tags = local.tags
+}
+
 # ========================================
-# AWS PARAMETER STORE - FOR PIPELINE 2
+# AWS PARAMETER STORE - FOR PIPELINE 2 (Using for expressions)
 # ========================================
 
 # Store VPC ID
 resource "aws_ssm_parameter" "vpc_id" {
   name  = "/${var.environment}/${var.service_name}/vpc-id"
   type  = "String"
-  value = module.networking.vpc_id
+  value = local.parameter_store_values.vpc_id
   
   tags = local.tags
 }
 
-# Store Private Subnet IDs
-resource "aws_ssm_parameter" "private_subnet_ids" {
-  name  = "/${var.environment}/${var.service_name}/private-subnet-ids"
-  type  = "StringList"
-  value = join(",", module.networking.private_subnet_ids)
-  
-  tags = local.tags
-}
-
-# Store Public Subnet IDs
+# Store Public Subnet IDs using for expression
 resource "aws_ssm_parameter" "public_subnet_ids" {
-  name  = "/${var.environment}/${var.service_name}/public-subnet-ids"
-  type  = "StringList"
-  value = join(",", module.networking.public_subnet_ids)
+  for_each = local.parameter_store_values.public_subnet_ids
   
-  tags = local.tags
+  name  = "/${var.environment}/${var.service_name}/public-subnet-${each.key}"
+  type  = "String"
+  value = each.value
+  
+  tags = merge(local.tags, {
+    "SubnetIndex" = each.key
+    "SubnetType"  = "public"
+  })
 }
 
-# Store ALB ARN
+# Store Private Subnet IDs using for expression
+resource "aws_ssm_parameter" "private_subnet_ids" {
+  for_each = local.parameter_store_values.private_subnet_ids
+  
+  name  = "/${var.environment}/${var.service_name}/private-subnet-${each.key}"
+  type  = "String"
+  value = each.value
+  
+  tags = merge(local.tags, {
+    "SubnetIndex" = each.key
+    "SubnetType"  = "private"
+  })
+}
+
+# Store ALB details
 resource "aws_ssm_parameter" "alb_arn" {
   name  = "/${var.environment}/${var.service_name}/alb-arn"
   type  = "String"
-  value = module.alb.alb_arn
+  value = local.parameter_store_values.alb_arn
   
   tags = local.tags
 }
 
-# Store ALB DNS Name
 resource "aws_ssm_parameter" "alb_dns_name" {
   name  = "/${var.environment}/${var.service_name}/alb-dns-name"
   type  = "String"
-  value = module.alb.alb_dns_name
+  value = local.parameter_store_values.alb_dns_name
   
   tags = local.tags
 }
 
-# Store Target Group ARN
 resource "aws_ssm_parameter" "target_group_arn" {
   name  = "/${var.environment}/${var.service_name}/target-group-arn"
   type  = "String"
-  value = module.alb.target_group_arn
+  value = local.parameter_store_values.target_group_arn
   
   tags = local.tags
 }
 
-# Store ECS Security Group ID
+# Store Security Group ID
 resource "aws_ssm_parameter" "ecs_security_group_id" {
   name  = "/${var.environment}/${var.service_name}/ecs-security-group-id"
   type  = "String"
-  value = module.security.ecs_sg_id
+  value = local.parameter_store_values.ecs_security_group_id
   
   tags = local.tags
 }
 
-# Store ECS Task Execution Role ARN
+# Store IAM Role ARN
 resource "aws_ssm_parameter" "ecs_task_execution_role_arn" {
   name  = "/${var.environment}/${var.service_name}/ecs-task-execution-role-arn"
   type  = "String"
-  value = module.security.ecs_task_execution_role_arn
+  value = local.parameter_store_values.ecs_task_execution_role_arn
   
   tags = local.tags
 }
 
-# Store ECR Repository URL
+# Store ECR details
 resource "aws_ssm_parameter" "ecr_repository_url" {
   name  = "/${var.environment}/${var.service_name}/ecr-repository-url"
   type  = "String"
-  value = module.ecr.ecr_repo_url
+  value = local.parameter_store_values.ecr_repository_url
   
   tags = local.tags
 }
 
-# Store ECR Repository Name
+resource "aws_ssm_parameter" "ecr_repository_arn" {
+  name  = "/${var.environment}/${var.service_name}/ecr-repository-arn"
+  type  = "String"
+  value = local.parameter_store_values.ecr_repository_arn
+  
+  tags = local.tags
+}
+
 resource "aws_ssm_parameter" "ecr_repository_name" {
   name  = "/${var.environment}/${var.service_name}/ecr-repository-name"
   type  = "String"
-  value = module.ecr.ecr_repo_name
+  value = local.parameter_store_values.ecr_repository_name
+  
+  tags = local.tags
+}
+
+# Store VPC Link ID
+resource "aws_ssm_parameter" "vpc_link_id" {
+  name  = "/${var.environment}/${var.service_name}/vpc-link-id"
+  type  = "String"
+  value = local.parameter_store_values.vpc_link_id
   
   tags = local.tags
 }

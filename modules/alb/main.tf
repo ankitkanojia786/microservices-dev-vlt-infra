@@ -1,5 +1,5 @@
 resource "aws_lb" "this" {
-  name               = "${var.environment}-alr-subscription-alb"
+  name               = "${var.environment}-alr-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [var.alb_sg_id]
@@ -17,7 +17,7 @@ resource "aws_lb" "this" {
 }
 
 resource "aws_lb_target_group" "this" {
-  name        = "${var.environment}-alr-subscription-tg"
+  name        = "${var.environment}-alr-tg"
   port        = 80
   protocol    = "HTTP"
   vpc_id      = var.vpc_id

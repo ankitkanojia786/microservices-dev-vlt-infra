@@ -5,3 +5,64 @@
 *.tfstate.lock.info
 .terraformrc
 terraform.rc
+*.tfplan
+*.tfplan.*
+
+# Terraform variable files
+*.tfvars
+!environments/*.tfvars
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# AWS credentials (never commit these)
+.aws/
+aws-credentials
+*.pem
+*.key
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Node modules (if any)
+node_modules/
+
+# Python files (if any)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Backup files
+*.bak
+*.backup
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+
+# Documentation build files
+docs/_build/
+site/
