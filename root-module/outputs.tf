@@ -41,10 +41,7 @@ output "ecs_security_group_id" {
   value       = module.security.ecs_sg_id
 }
 
-output "ecs_task_execution_role_arn" {
-  description = "ARN of the ECS task execution role"
-  value       = module.security.ecs_task_execution_role_arn
-}
+# ECS task execution role output removed - not needed for infrastructure-only deployment
 
 # ECR Outputs
 output "ecr_repository_url" {
