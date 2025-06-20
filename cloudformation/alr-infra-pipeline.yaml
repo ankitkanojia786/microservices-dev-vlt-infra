@@ -31,19 +31,6 @@ Parameters:
 
 
 Resources:
-  # S3 Bucket for Terraform State
-  TerraformStateBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: alr-nonprod-terraform-state
-      VersioningConfiguration:
-        Status: Enabled
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
-
   # S3 Bucket for Pipeline Artifacts
   PipelineArtifactsBucket:
     Type: AWS::S3::Bucket
@@ -93,8 +80,8 @@ Resources:
                   - s3:PutObject
                   - s3:ListBucket
                 Resource:
-                  - !GetAtt TerraformStateBucket.Arn
-                  - !Sub '${TerraformStateBucket.Arn}/*'
+                  - 'arn:aws:s3:::alr-nonprod-terraform-state'
+                  - 'arn:aws:s3:::alr-nonprod-terraform-state/*'
               - Effect: Allow
                 Action:
                   - dynamodb:GetItem
