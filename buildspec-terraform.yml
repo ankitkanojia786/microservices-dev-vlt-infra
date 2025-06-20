@@ -27,7 +27,7 @@ phases:
       - echo "Environment: $ENVIRONMENT"
       - echo "TF Command: $TF_COMMAND"
       - echo "Initializing Terraform..."
-      - terraform init -reconfigure
+      - terraform init -backend-config="backend-configs/$ENVIRONMENT.hcl" -reconfigure
       - echo "Validating Terraform configuration..."
       - terraform validate
       - echo "Terraform validation completed"
@@ -37,27 +37,22 @@ phases:
       - echo "=== ALR Infrastructure Pipeline - Build Phase ==="
       - echo "Running Terraform $TF_COMMAND for ALR Subscription infrastructure..."
       - |
-        case "$TF_COMMAND" in
-          "plan")
-            echo "Creating Terraform plan..."
-            terraform plan -var="environment=$ENVIRONMENT" -out=tfplan
-            echo "Terraform plan created successfully"
-            ;;
-          "apply")
-            echo "Applying Terraform configuration..."
-            terraform apply -var="environment=$ENVIRONMENT" -auto-approve
-            echo "Infrastructure provisioning completed"
-            ;;
-          "destroy")
-            echo "Destroying Terraform infrastructure..."
-            terraform destroy -var="environment=$ENVIRONMENT" -auto-approve
-            echo "Infrastructure destruction completed"
-            ;;
-          *)
-            echo "Unknown TF_COMMAND: $TF_COMMAND"
-            exit 1
-            ;;
-        esac
+        if [ "$TF_COMMAND" = "plan" ]; then
+          echo "Creating Terraform plan..."
+          terraform plan -var-file="environments/$ENVIRONMENT.tfvars" -out=tfplan
+          echo "Terraform plan created successfully"
+        elif [ "$TF_COMMAND" = "apply" ]; then
+          echo "Applying Terraform configuration..."
+          terraform apply -var-file="environments/$ENVIRONMENT.tfvars" -auto-approve
+          echo "Infrastructure provisioning completed"
+        elif [ "$TF_COMMAND" = "destroy" ]; then
+          echo "Destroying Terraform infrastructure..."
+          terraform destroy -var-file="environments/$ENVIRONMENT.tfvars" -auto-approve
+          echo "Infrastructure destruction completed"
+        else
+          echo "Unknown TF_COMMAND: $TF_COMMAND"
+          exit 1
+        fi
       
   post_build:
     commands:
