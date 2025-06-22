@@ -1,6 +1,6 @@
 # ALB Security Group
 resource "aws_security_group" "alb" {
-  name        = "${var.environment}-alr-subscription-microservice-alb-sg"
+  name        = "${split("-", var.environment)[0]}-${split("-", var.environment)[1]}-alr-alb-sg"
   description = "Security group for ALB"
   vpc_id      = var.vpc_id
   
@@ -26,13 +26,13 @@ resource "aws_security_group" "alb" {
   }
   
   tags = merge(var.tags, {
-    Name = "${var.environment}-alr-subscription-microservice-alb-sg"
+    Name = "${split("-", var.environment)[0]}-${split("-", var.environment)[1]}-alr-alb-sg"
   })
 }
 
 # ECS Security Group
 resource "aws_security_group" "ecs" {
-  name        = "${var.environment}-alr-subscription-microservice-ecs-sg"
+  name        = "${split("-", var.environment)[0]}-${split("-", var.environment)[1]}-alr-ecs-sg"
   description = "Security group for ECS tasks"
   vpc_id      = var.vpc_id
   
@@ -51,7 +51,7 @@ resource "aws_security_group" "ecs" {
   }
   
   tags = merge(var.tags, {
-    Name = "${var.environment}-alr-subscription-microservice-ecs-sg"
+    Name = "${split("-", var.environment)[0]}-${split("-", var.environment)[1]}-alr-ecs-sg"
   })
 }
 
